@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import ConteudoSite from './ConteudoSite'; // Importa o texto de SEO
+import AdSenseBanner from './AdSenseBanner';
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -60,7 +61,7 @@ function App() {
 
     try {
       // 2. Chama o Python em segundo plano enquanto o anúncio roda
-      const response = await fetch('http://127.0.0.1:8000/gerar-contrato/' || 'https://apigeradordeprocuracao.onrender.com/gerar-contrato/', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/gerar-contrato/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -194,7 +195,7 @@ function App() {
                     <p style={{fontSize: '0.8rem', color: '#666'}}>Publicidade</p>
                     {/* AQUI VOCÊ VAI COLAR O CÓDIGO DO ADSENSE DEPOIS */}
                     <div style={{background: '#eee', width: '100%', height: '250px', display:'flex', alignItems:'center', justifyContent:'center', color: '#333'}}>
-                        Espaço para Anúncio (Google AdSense)
+                        <AdSenseBanner />
                     </div>
                 </div>
                 {/* ----------------------- */}
