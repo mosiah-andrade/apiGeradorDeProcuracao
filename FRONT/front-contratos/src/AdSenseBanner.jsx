@@ -42,7 +42,8 @@ const AdSenseBanner = () => {
            data-ad-slot="2899879434"
            data-ad-format="auto"
            data-full-width-responsive="true"
-           data-ad-test="on">
+          //  data-ad-test="on"
+          >
            </ins>
            
     </div>
