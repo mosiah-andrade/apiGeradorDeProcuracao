@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import ConteudoSite from './ConteudoSite'; // Importa o texto de SEO
 import AdSenseBanner from './AdSenseBanner';
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -94,125 +95,169 @@ function App() {
   };
 
   return (
-    <div className="page-wrapper">
-    <div className="container">
-      <header>
-        <h1>Procuração</h1>
-        <div className="progress-bar">
-          <div className={`step ${step >= 0 ? 'active' : ''}`}>1</div>
-          <div className="line"></div>
-          <div className={`step ${step >= 1 ? 'active' : ''}`}>2</div>
-          <div className="line"></div>
-          <div className={`step ${step >= 2 ? 'active' : ''}`}>3</div>
-        </div>
-        <h2>{titulosEtapas[step]}</h2>
-      </header>
+    <HelmetProvider>
+      <div className="page-wrapper">
 
-      <form onSubmit={handleSubmit}>
-        {/* ... SEUS CAMPOS DO FORMULÁRIO (MANTIVE IGUAL) ... */}
-        
-        {step === 0 && (
-          <div className="step-content">
-            <div className="form-group">
-                <label>Nome do Cliente</label>
-                <input name="nome" value={formData.nome} onChange={handleChange} required autoFocus />
-            </div>
-            <div className="form-group">
-                <label>CPF / CNPJ</label>
-                <input name="cpf" value={formData.cpf} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-                <label>Endereço Completo</label>
-                <input name="endereco" value={formData.endereco} onChange={handleChange} />
-            </div>
-            <div className="row">
-                <div className="half"><label>Bairro</label><input name="bairro" value={formData.bairro} onChange={handleChange} /></div>
-                <div className="half"><label>Cidade</label><input name="cidade" value={formData.cidade} onChange={handleChange} /></div>
-            </div>
-            <div className="form-group"><label>CEP</label><input name="cep" value={formData.cep} onChange={handleChange} /></div>
+        <Helmet>
+          <title> Gerador de Procurações para Energia Solar</title>
+          <meta name="description" content="Gere procurações automáticas para homologação de energia solar nas concessionárias Celpe (Neoenergia), Coelba, Cosern e Equatorial. Rápido, seguro e gratuito para integradores." />
+          <meta name="keywords" content="energia solar, homologação, procuração celpe, procuração neoenergia, integrador solar, fotovoltaico, gerar contrato solar" />
+          <link rel="canonical" href="https://procuracao.asaweb.tech/" />
+          
+          {/* Tags para Redes Sociais (Open Graph / Facebook / WhatsApp) */}
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content="Gerador de Documentos" />
+          <meta property="og:description" content="Ferramenta gratuita para gerar procurações de homologação solar em segundos." />
+          <meta property="og:image" content="https://procuracao.asaweb.tech/imagem-social-share.png" /> 
+          <meta property="og:url" content="https://procuracao.asaweb.tech/" />
+          <meta name="theme-color" content="#0f172a" />
+          <meta name="robots" content="index, follow" />
+          <meta name="author" content="Asaweb.tech" />
+          {/* Schema.org - Dados Estruturados para Ferramentas Web */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Gerador de Procuração Solar",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web Browser",
+              "browserRequirements": "Requires JavaScript",
+              "url": "https://procuracao.asaweb.tech/",
+              "image": "https://procuracao.asaweb.tech/imagem-social-share.png",
+              "description": "Ferramenta gratuita para gerar procurações de homologação de energia solar para Celpe, Coelba e outras concessionárias.",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "BRL",
+                "availability": "https://schema.org/InStock"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "Asaweb.tech"
+              }
+            })}
+          </script>
+        </Helmet>
+
+      <div className="container">
+        <header>
+          <h1>Procuração</h1>
+          <div className="progress-bar">
+            <div className={`step ${step >= 0 ? 'active' : ''}`}>1</div>
+            <div className="line"></div>
+            <div className={`step ${step >= 1 ? 'active' : ''}`}>2</div>
+            <div className="line"></div>
+            <div className={`step ${step >= 2 ? 'active' : ''}`}>3</div>
           </div>
-        )}
+          <h2>{titulosEtapas[step]}</h2>
+        </header>
 
-        {step === 1 && (
-          <div className="step-content">
-            <div className="row">
-              <div className="half">
-                <label>Concessionária</label>
-                <select name="concessionaria" value={formData.concessionaria} onChange={handleChange}>
-                  <option value="CELPE">CELPE</option>
-                  {/* <option value="COELBA">COELBA</option>
-                  <option value="COSERN">COSERN</option>
-                  <option value="EQUATORIAL">EQUATORIAL</option>
-                  <option value="TESTE">TESTE</option> */}
-                </select>
+        <form onSubmit={handleSubmit}>
+          {/* ... SEUS CAMPOS DO FORMULÁRIO (MANTIVE IGUAL) ... */}
+          
+          {step === 0 && (
+            <div className="step-content">
+              <div className="form-group">
+                  <label>Nome do Cliente</label>
+                  <input name="nome" value={formData.nome} onChange={handleChange} required autoFocus />
               </div>
-              <div className="form-group"><label>Classificação</label><input name="classificacao" value={formData.classificacao} onChange={handleChange} required/></div>
+              <div className="form-group">
+                  <label>CPF / CNPJ</label>
+                  <input name="cpf" value={formData.cpf} onChange={handleChange} required />
+              </div>
+              <div className="form-group">
+                  <label>Endereço Completo</label>
+                  <input name="endereco" value={formData.endereco} onChange={handleChange} />
+              </div>
+              <div className="row">
+                  <div className="half"><label>Bairro</label><input name="bairro" value={formData.bairro} onChange={handleChange} /></div>
+                  <div className="half"><label>Cidade</label><input name="cidade" value={formData.cidade} onChange={handleChange} /></div>
+              </div>
+              <div className="form-group"><label>CEP</label><input name="cep" value={formData.cep} onChange={handleChange} /></div>
             </div>
-            <div className="form-group"><label>Conta Contrato</label><input name="contacontrato" value={formData.contacontrato} onChange={handleChange} required/></div>
-            <hr className="divider"/><p className="subtitle">Representante Legal (Opcional):</p>
-            <div className="form-group"><label>Nome</label><input name="representante" value={formData.representante} onChange={handleChange} /></div>
-            <div className="form-group"><label>CPF</label><input name="cpf_representante" value={formData.cpf_representante} onChange={handleChange} /></div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="step-content">
-            <div className="form-group"><label>Nome do Contratado</label><input name="nome_CONTRATADO" value={formData.nome_CONTRATADO} onChange={handleChange} /></div>
-            <div className="row">
-                <div className="half"><label>RG</label><input name="rg_CONTRATADO" value={formData.rg_CONTRATADO} onChange={handleChange} required /></div>
-                <div className="half"><label>CPF</label><input name="cpf_CONTRATADO" value={formData.cpf_CONTRATADO} onChange={handleChange} required /></div>
-            </div>
-            <div className="form-group"><label>Endereço do Contratado</label><input name="endereco_CONTRATADO" value={formData.endereco_CONTRATADO} onChange={handleChange} required/></div>
-          </div>
-        )}
-
-        {/* BOTÕES */}
-        <div className="button-group">
-          {step > 0 && <button type="button" onClick={prevStep} className="btn-secondary">Voltar</button>}
-          {step < 2 ? (
-            <button type="button" onClick={nextStep} className="btn-primary">Próximo</button>
-          ) : (
-            <button type="submit" disabled={loading} className="btn-success">
-              {loading ? 'Processando...' : 'Gerar Documento'}
-            </button>
           )}
-        </div>
-      </form>
-    </div>
 
-    {/* TEXTO DE SEO PARA ADSENSE */}
-    <ConteudoSite />
-
-    {/* --- MODAL DE ANÚNCIO (POPUP) --- */}
-    {showAdModal && (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <h3>Gerando seu Documento...</h3>
-                <p>Aguarde <strong>{timeLeft}</strong> segundos para o download iniciar.</p>
-                
-                {/* --- ÁREA DO ANÚNCIO --- */}
-                <div className="ad-container">
-                    <p style={{fontSize: '0.8rem', color: '#666'}}>Publicidade</p>
-                    {/* AQUI VOCÊ VAI COLAR O CÓDIGO DO ADSENSE DEPOIS */}
-                    <div style={{background: '#eee', width: '100%', height: '250px', display:'flex', alignItems:'center', justifyContent:'center', color: '#333'}}>
-                        <AdSenseBanner />
-                    </div>
+          {step === 1 && (
+            <div className="step-content">
+              <div className="row">
+                <div className="half">
+                  <label>Concessionária</label>
+                  <select name="concessionaria" value={formData.concessionaria} onChange={handleChange}>
+                    <option value="CELPE">CELPE</option>
+                    {/* <option value="COELBA">COELBA</option>
+                    <option value="COSERN">COSERN</option>
+                    <option value="EQUATORIAL">EQUATORIAL</option>
+                    <option value="TESTE">TESTE</option> */}
+                  </select>
                 </div>
-                {/* ----------------------- */}
-
-                {readyToDownload && (
-                    <p style={{color: '#10b981', marginTop: '10px'}}>Download iniciado!</p>
-                )}
-                
-                {/* Botão para fechar só aparece depois do tempo */}
-                {readyToDownload && (
-                     <button onClick={() => setShowAdModal(false)} className="btn-secondary" style={{marginTop: '15px'}}>Fechar</button>
-                )}
+                <div className="form-group"><label>Classificação</label><input name="classificacao" value={formData.classificacao} onChange={handleChange} required/></div>
+              </div>
+              <div className="form-group"><label>Conta Contrato</label><input name="contacontrato" value={formData.contacontrato} onChange={handleChange} required/></div>
+              <hr className="divider"/><p className="subtitle">Representante Legal (Opcional):</p>
+              <div className="form-group"><label>Nome</label><input name="representante" value={formData.representante} onChange={handleChange} /></div>
+              <div className="form-group"><label>CPF</label><input name="cpf_representante" value={formData.cpf_representante} onChange={handleChange} /></div>
             </div>
-        </div>
-    )}
+          )}
 
-    </div>
+          {step === 2 && (
+            <div className="step-content">
+              <div className="form-group"><label>Nome do Contratado</label><input name="nome_CONTRATADO" value={formData.nome_CONTRATADO} onChange={handleChange} /></div>
+              <div className="row">
+                  <div className="half"><label>RG</label><input name="rg_CONTRATADO" value={formData.rg_CONTRATADO} onChange={handleChange} required /></div>
+                  <div className="half"><label>CPF</label><input name="cpf_CONTRATADO" value={formData.cpf_CONTRATADO} onChange={handleChange} required /></div>
+              </div>
+              <div className="form-group"><label>Endereço do Contratado</label><input name="endereco_CONTRATADO" value={formData.endereco_CONTRATADO} onChange={handleChange} required/></div>
+            </div>
+          )}
+
+          {/* BOTÕES */}
+          <div className="button-group">
+            {step > 0 && <button type="button" onClick={prevStep} className="btn-secondary">Voltar</button>}
+            {step < 2 ? (
+              <button type="button" onClick={nextStep} className="btn-primary">Próximo</button>
+            ) : (
+              <button type="submit" disabled={loading} className="btn-success">
+                {loading ? 'Processando...' : 'Gerar Documento'}
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* TEXTO DE SEO PARA ADSENSE */}
+      <ConteudoSite />
+
+      {/* --- MODAL DE ANÚNCIO (POPUP) --- */}
+      {showAdModal && (
+          <div className="modal-overlay">
+              <div className="modal-content">
+                  <h3>Gerando seu Documento...</h3>
+                  <p>Aguarde <strong>{timeLeft}</strong> segundos para o download iniciar.</p>
+                  
+                  {/* --- ÁREA DO ANÚNCIO --- */}
+                  <div className="ad-container">
+                      <p style={{fontSize: '0.8rem', color: '#666'}}>Publicidade</p>
+                      {/* AQUI VOCÊ VAI COLAR O CÓDIGO DO ADSENSE DEPOIS */}
+                      <div style={{background: '#eee', width: '100%', height: '250px', display:'flex', alignItems:'center', justifyContent:'center', color: '#333'}}>
+                          <AdSenseBanner />
+                      </div>
+                  </div>
+                  {/* ----------------------- */}
+
+                  {readyToDownload && (
+                      <p style={{color: '#10b981', marginTop: '10px'}}>Download iniciado!</p>
+                  )}
+                  
+                  {/* Botão para fechar só aparece depois do tempo */}
+                  {readyToDownload && (
+                      <button onClick={() => setShowAdModal(false)} className="btn-secondary" style={{marginTop: '15px'}}>Fechar</button>
+                  )}
+              </div>
+          </div>
+      )}
+
+      </div>
+    </HelmetProvider>
   );
 }
 
