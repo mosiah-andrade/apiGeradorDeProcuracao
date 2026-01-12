@@ -1,3 +1,4 @@
+import ReactGA from "react-ga4";
 import { useState, useEffect } from 'react';
 import './App.css';
 import ConteudoSite from './ConteudoSite'; // Importa o texto de SEO
@@ -5,6 +6,13 @@ import AdSenseBanner from './AdSenseBanner';
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
 function App() {
+  useEffect(() => {
+    // Substitua pelo seu ID de Medida 'G-XXXXXXXXXX' do Google Analytics
+    ReactGA.initialize("G-BLV25S4PX9"); 
+    
+    // Registra a visualização de página inicial
+    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+  }, []);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   
@@ -51,6 +59,14 @@ function App() {
       nextStep();
       return; // PARA AQUI! Não abre modal, não envia para o Python.
     }
+
+    // --- CÓDIGO DO ANALYTICS AQUI ---
+    // Isso avisa ao Google: "Alguém clicou para gerar!"
+    ReactGA.event({
+      category: "Documento",
+      action: "Clicou Gerar",
+      label: formData.concessionaria // (Opcional) Mostra qual concessionária escolheram
+    });
     
     // Se chegou aqui, estamos na última etapa.
     setDownloadBlob(null);
