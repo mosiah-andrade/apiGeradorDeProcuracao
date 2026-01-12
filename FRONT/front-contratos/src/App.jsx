@@ -60,7 +60,7 @@ function App() {
 
     try {
       // 2. Chama o Python em segundo plano enquanto o anúncio roda
-      const response = await fetch('http://127.0.0.1:8000/gerar-contrato/', {
+      const response = await fetch('http://127.0.0.1:8000/gerar-contrato/' || 'https://apigeradordeprocuracao.onrender.com/gerar-contrato/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
