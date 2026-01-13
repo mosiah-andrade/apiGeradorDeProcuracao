@@ -20,6 +20,16 @@ app.add_middleware(
 )
 # -----------------------------------------------------------------
 
+@app.get("/health")
+def health_check():
+    """
+    Rota leve para evitar o 'Cold Start' do Render.
+    Cadastre a URL desta rota (ex: https://sua-api.onrender.com/health)
+    em um serviço de monitoramento (UptimeRobot).
+    """
+    return {"status": "ok", "message": "API is awake and running!"}
+# ==========================================
+
 # Modelo de dados que o site vai enviar
 class DadosContrato(BaseModel):
     nome: str
