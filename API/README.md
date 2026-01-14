@@ -1,0 +1,1 @@
+py -m uvicorn gerar_contrato:app --reload

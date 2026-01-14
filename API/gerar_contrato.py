@@ -34,6 +34,8 @@ def health_check():
 class DadosContrato(BaseModel):
     nome: str
     cpf: str
+    rg: str = "VAZIO"              # <--- NOVO
+    orgao_emissor: str = "VAZIO"   # <--- NOVO
     kwp: str = "0.0"
     endereco: str = "Rua Teste"
     cidade: str = "Cidade Teste"
@@ -46,9 +48,9 @@ class DadosContrato(BaseModel):
     cpf_representante: str = "VAZIO"
     nome_CONTRATADO: str = "VAZIO"
     rg_CONTRATADO: str = "VAZIO"
+    orgao_emissor_CONTRATADO: str = "VAZIO"
     cpf_CONTRATADO: str = "VAZIO"
     endereco_CONTRATADO: str = "VAZIO"
-    
 
 @app.post("/gerar-contrato/")
 def gerar_contrato(dados: DadosContrato):
@@ -62,6 +64,8 @@ def gerar_contrato(dados: DadosContrato):
         # Dados do Cliente
         "{{NOME}}": dados.nome,
         "{{CPF}}": dados.cpf,
+        "{{RG}}": dados.rg,                         
+        "{{ORGAO_EMISSOR}}": dados.orgao_emissor,
         "{{ENDERECO}}": dados.endereco,
         "{{CIDADE}}": dados.cidade,
         "{{CLASSIFICACAO}}": dados.classificacao,
@@ -77,6 +81,7 @@ def gerar_contrato(dados: DadosContrato):
         # --- NOVOS CAMPOS DO CONTRATADO ---
         "{{NOME_CONTRATADO}}": dados.nome_CONTRATADO,
         "{{RG_CONTRATADO}}": dados.rg_CONTRATADO,
+        "{{ORGAO_EMISSOR_CONTRATADO}}": dados.orgao_emissor_CONTRATADO,
         "{{CPF_CONTRATADO}}": dados.cpf_CONTRATADO,
         "{{ENDERECO_CONTRATADO}}": dados.endereco_CONTRATADO,
         
@@ -86,14 +91,25 @@ def gerar_contrato(dados: DadosContrato):
         "{{ANO}}": str(hoje.year),
     }
 
-    # 3. Define qual arquivo modelo usar
-    # IMPORTANTE: Para testar agora, vamos forçar o uso de um arquivo simples
-    # Certifique-se de ter um arquivo chamado "modelo_teste.docx" na mesma pasta
-    caminho_modelo = "modelo_teste.docx"
+    # 3. Lógica de Seleção do Modelo (CPF vs CNPJ)
+    # Remove pontos, traços e barras para contar apenas os números
+    doc_limpo = dados.cpf.replace(".", "").replace("-", "").replace("/", "").strip()
+
+    if len(doc_limpo) > 11:
+        # Se tiver mais de 11 dígitos, é CNPJ (Pessoa Jurídica)
+        caminho_modelo = "modelo_pj.docx" 
+        print(f"Detectado CNPJ ({doc_limpo}). Usando modelo PJ.")
+    else:
+        # Caso contrário, assumimos que é CPF (Pessoa Física)
+        caminho_modelo = "modelo_pf.docx"
+        print(f"Detectado CPF ({doc_limpo}). Usando modelo PF.")
     
+    # Verifica se o arquivo existe antes de tentar abrir
     if not os.path.exists(caminho_modelo):
-        # Tenta procurar na pasta se o nome for diferente, ou avisa o erro
-        raise HTTPException(status_code=404, detail="ERRO: Crie um arquivo chamado 'modelo_teste.docx' na pasta para testar!")
+        raise HTTPException(
+            status_code=404, 
+            detail=f"ERRO: O arquivo '{caminho_modelo}' não foi encontrado na pasta da API. Verifique se ele existe!"
+        )
 
     # --- 4. Abre e substitui (COM FORMATAÇÃO) ---
     doc = Document(caminho_modelo)
