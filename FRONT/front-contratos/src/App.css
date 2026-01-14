@@ -3,6 +3,10 @@
 /* Importando fonte clássica para os títulos (opcional, mas recomendado) */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap');
 
+* {
+  box-sizing: border-box; /* Garante que padding não estoure a largura */
+}
+
 :root {
   /* --- PALETA DARK LUXURY --- */
   --bg-page: #0f172a;          /* Azul noturno muito escuro */
@@ -274,4 +278,47 @@ button:disabled {
     border: 1px dashed #444;
     padding: 10px;
     background: #000;
+}
+/* --- 2. AJUSTE RESPONSIVO (Cole isso no FINAL do arquivo) --- */
+@media (max-width: 600px) {
+  .container {
+    width: 95% !important;   /* Ocupa quase toda a largura da tela */
+    max-width: 100% !important;
+    margin: 10px auto !important; /* Margem externa mínima */
+    padding: 20px 15px !important; /* Padding reduzido: 20px vertical, 15px lateral */
+  }
+
+  /* Força os campos a ocuparem 100% do espaço disponível */
+  .row {
+    display: block !important; /* Desfaz o flexbox lateral */
+  }
+
+  .half {
+    width: 100% !important;
+    margin-bottom: 15px;
+    display: block;
+  }
+
+  /* Garante que os inputs não ultrapassem a borda */
+  input, select {
+    width: 100% !important;
+    font-size: 16px; /* Evita zoom automático no iPhone */
+  }
+
+  /* Ajuste para o título não quebrar feio */
+  header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  /* Ajuste dos botões */
+  .button-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .button-group button {
+    width: 100%;
+    padding: 12px;
+  }
 }

@@ -1,5 +1,6 @@
 // src/AdSenseBanner.jsx
 import React, { useEffect, useRef } from 'react';
+import anuncio from '/imagem-social-share.png';
 
 const AdSenseBanner = () => {
   const adRef = useRef(null);
@@ -28,16 +29,19 @@ const AdSenseBanner = () => {
     // min-width e min-height garantem que o espaço exista mesmo antes do anúncio chegar
     <div style={{ 
         overflow: 'hidden', 
-        minHeight: '250px', 
+        // minHeight: '250px', 
         minWidth: '300px', 
-        background: '#f1f1f1', // Cor de fundo para não ficar buraco negro
+        // background: '#f1f1f1', // Cor de fundo para não ficar buraco negro
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         margin: '0 auto',
-        width: '100%'
+        width: '100%',
+        height: 'auto'
+        
+        
     }}>
-      <ins className="adsbygoogle"
+      {/* <ins className="adsbygoogle"
            ref={adRef} 
            style={{ display: 'block', width: '100%', minWidth: '300px' }}
            data-ad-client="ca-pub-6246941190460663" 
@@ -46,8 +50,12 @@ const AdSenseBanner = () => {
            data-full-width-responsive="true"
            data-ad-test="on"
           >
-           </ins>
-           
+           </ins> */}
+      <img src={anuncio} alt="Anúncio" style={{ 
+          maxWidth: '100%', 
+          height: 'auto', 
+          display: 'block' 
+        }} />
     </div>
   );
 };
