@@ -34,15 +34,17 @@ const AdSenseBanner = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        margin: '0 auto'
+        margin: '0 auto',
+        width: '100%'
     }}>
       <ins className="adsbygoogle"
-           style={{ display: 'block' }}
+           ref={adRef} 
+           style={{ display: 'block', width: '100%', minWidth: '300px' }}
            data-ad-client="ca-pub-6246941190460663" 
            data-ad-slot="2899879434"
            data-ad-format="auto"
            data-full-width-responsive="true"
-          //  data-ad-test="on"
+           data-ad-test="on"
           >
            </ins>
            
