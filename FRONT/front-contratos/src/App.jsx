@@ -230,8 +230,7 @@ function App() {
                   <input name="nome" value={formData.nome} onChange={handleChange} required autoFocus />
               </div>
               
-              <div className="row">
-                  <div className="half">
+                  <div className="half form-group">
                     <label>CPF / CNPJ</label>
                     <input 
                       name="cpf" 
@@ -243,28 +242,29 @@ function App() {
                       maxLength={18}
                     />
                   </div>
-                  <div className="half">
-                    <label>RG / Inscrição Estadual</label>
+              <div className="row form-group" >
+                <div className="half">
+                  <label>RG / Inscrição Estadual</label>
+                  <input 
+                    name="rg" 
+                    value={formData.rg} 
+                    onChange={handleChange} 
+                    placeholder="Somente números/letras"
+                    maxLength={15}
+                  />
+                </div>
+                <div className="half">
+                    <label>Órgão Emissor (Ex: SSP/PE)</label>
                     <input 
-                      name="rg" 
-                      value={formData.rg} 
+                      name="orgao_emissor" 
+                      value={formData.orgao_emissor} 
                       onChange={handleChange} 
-                      placeholder="Somente números/letras"
-                      maxLength={15}
+                      maxLength={10}
+                      style={{textTransform: 'uppercase'}} 
                     />
-                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                  <label>Órgão Emissor (Ex: SSP/PE)</label>
-                  <input 
-                    name="orgao_emissor" 
-                    value={formData.orgao_emissor} 
-                    onChange={handleChange} 
-                    maxLength={10}
-                    style={{textTransform: 'uppercase'}} 
-                  />
-              </div>
 
               <div className="form-group">
                   <label>Endereço Completo</label>
@@ -310,11 +310,22 @@ function App() {
                 </div>
               </div>
               
-              <div className="form-group"><label>Conta Contrato</label><input name="contacontrato" value={formData.contacontrato} onChange={handleChange} required inputMode="numeric"/></div>
+              <div className="form-group"> 
+                <label>Conta Contrato</label>
+                <input name="contacontrato" value={formData.contacontrato} onChange={handleChange} required inputMode="numeric"/>
+              </div>
               
-              <hr className="divider"/><p className="subtitle">Representante Legal (Opcional):</p>
-              <div className="form-group"><label>Nome</label><input name="representante" value={formData.representante} onChange={handleChange} /></div>
-              <div className="form-group"><label>CPF Representante</label><input name="cpf_representante" value={formData.cpf_representante} onChange={handleChange} placeholder="000.000.000-00"/></div>
+              <p className="subtitle">Representante Legal (Opcional):</p>
+              <div className="form-group">
+                <label>Nome</label>
+                <input name="representante" value={formData.representante} onChange={handleChange} />
+              </div>
+
+              <div className="form-group">
+                <label>CPF Representante</label>
+                <input name="cpf_representante" value={formData.cpf_representante} onChange={handleChange} placeholder="000.000.000-00"/>
+              </div>
+
             </div>
           )}
 
@@ -325,7 +336,7 @@ function App() {
                   <input name="nome_CONTRATADO" value={formData.nome_CONTRATADO} onChange={handleChange} />
               </div>
               
-              <div className="row">
+              <div className="row form-group">
                   <div className="half">
                       <label>RG</label>
                       <input 
@@ -333,6 +344,7 @@ function App() {
                           value={formData.rg_CONTRATADO} 
                           onChange={handleChange} 
                           required 
+                          placeholder="Somente números/letras"
                           maxLength={15}
                       />
                   </div>
