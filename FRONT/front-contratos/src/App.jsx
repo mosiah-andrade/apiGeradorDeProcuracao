@@ -294,9 +294,9 @@ function App() {
                   <label>Concessionária</label>
                   <select name="concessionaria" value={formData.concessionaria} onChange={handleChange}>
                     <option value="CELPE">CELPE (Neoenergia)</option>
-                    <option value="COELBA">COELBA</option>
+                    {/* <option value="COELBA">COELBA</option>
                     <option value="COSERN">COSERN</option>
-                    <option value="EQUATORIAL">EQUATORIAL</option>
+                    <option value="EQUATORIAL">EQUATORIAL</option> */}
                   </select>
                 </div>
                 
