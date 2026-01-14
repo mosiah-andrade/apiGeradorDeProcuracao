@@ -270,7 +270,7 @@ function App() {
                   <label>Endereço Completo</label>
                   <input name="endereco" value={formData.endereco} onChange={handleChange} />
               </div>
-              <div className="row">
+              <div className="row form-group">
                   <div className="half"><label>Bairro</label><input name="bairro" value={formData.bairro} onChange={handleChange} /></div>
                   <div className="half"><label>Cidade</label><input name="cidade" value={formData.cidade} onChange={handleChange} /></div>
               </div>
@@ -289,7 +289,7 @@ function App() {
 
           {step === 1 && (
             <div className="step-content">
-              <div className="row">
+              <div className="row form-group">
                 <div className="half">
                   <label>Concessionária</label>
                   <select name="concessionaria" value={formData.concessionaria} onChange={handleChange}>
