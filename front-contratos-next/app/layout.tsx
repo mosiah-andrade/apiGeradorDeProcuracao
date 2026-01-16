@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import CookieBanner from "@/components/CookieBanner";
+
 
 export const metadata: Metadata = {
   title: "Gerador de Procurações para Energia Solar",
@@ -37,7 +39,7 @@ export default function RootLayout({
     <html lang="pt-br">
       <body>
         {children}
-        
+        <CookieBanner />
         {/* Script do Google AdSense Carregado Manualmente e Otimizado */}
         <Script
           id="adsense-init"
