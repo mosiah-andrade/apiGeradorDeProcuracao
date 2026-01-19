@@ -119,7 +119,7 @@ export default function Home() {
       // IMPORTANTE: Configure NEXT_PUBLIC_API_URL no seu .env.local
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       
-      const response = await fetch(`${apiUrl}/gerar-contrato/`, {
+      const response = await fetch(`${apiUrl}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
