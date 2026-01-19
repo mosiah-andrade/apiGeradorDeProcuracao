@@ -179,7 +179,7 @@ function App() {
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Gerador de Documentos" />
           <meta property="og:description" content="Ferramenta gratuita para gerar procurações de homologação solar em segundos." />
-          <meta property="og:image" content="https://procuracao.asaweb.tech/imagem-social-share.png" /> 
+          <meta property="og:image" content="https://asaweb.tech/imagem-social-share.png" /> 
           <meta property="og:url" content="https://procuracao.asaweb.tech/" />
           <meta name="theme-color" content="#0f172a" />
           <meta name="robots" content="index, follow" />

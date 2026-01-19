@@ -146,11 +146,55 @@ export default function Home() {
     a.remove();
   };
 
+  // 1. Defina os dados do JSON-LD aqui em cima
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "O documento serve para Pessoa Jurídica?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sim. Nossa ferramenta suporta tanto CPF quanto CNPJ. Basta selecionar a opção correspondente no formulário."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "É seguro colocar os dados do meu cliente aqui?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sim. O gerador processa as informações localmente no seu navegador e na nossa API segura apenas para montar o arquivo DOCX."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "O documento é aceito pela Neoenergia?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "O modelo foi criado seguindo estritamente os padrões exigidos pelas normas da ANEEL e concessionárias do grupo Neoenergia."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Posso editar o arquivo depois de baixar?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sim! O arquivo é gerado em formato Word (.docx), permitindo qualquer ajuste final."
+        }
+      }
+    ]
+  };
+
   return (
     <div className="page-wrapper">
       <div className="container">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <header>
-          <h1>Procuração</h1>
+          <h1>Gerador de Procuração para Energia Solar</h1>
           <div className="progress-bar">
             <div className={`step ${step >= 0 ? 'active' : ''}`}>1</div>
             <div className="line"></div>

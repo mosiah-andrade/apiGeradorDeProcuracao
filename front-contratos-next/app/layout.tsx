@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Gerador de Procuração Solar",
     description: "Rápido, seguro e gratuito para integradores.",
-    url: "https://procuracao.asaweb.tech/",
+    url: "https://asaweb.tech/",
     siteName: "Gerador Solar",
     images: [
       {
