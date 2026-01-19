@@ -24,7 +24,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./API-PHP/        # Pasta local no repositório
-          server-dir: ./public_html/api/  # Onde vai ficar na Hostinger
+          server-dir: ./api/  # Onde vai ficar na Hostinger
           exclude: |
             **/.git*
             **/.git*/**
@@ -49,7 +49,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           # AQUI ESTÁ O SEGREDO: Pegamos a pasta criada pelo build
           local-dir: ./front-contratos-next/out/
-          server-dir: ./public_html/       # Vai para a raiz do site
+          server-dir: ./      # Vai para a raiz do site
           exclude: |
             **/.git*
             **/node_modules/**
