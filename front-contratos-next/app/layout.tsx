@@ -2,7 +2,20 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
+import { Playfair_Display, Inter } from 'next/font/google'
 
+// Configure as fontes
+const playfair = Playfair_Display({ 
+  subsets: ['latin'],
+  display: 'swap', // Importante para performance
+  variable: '--font-playfair'
+})
+
+const inter = Inter({ 
+  subsets: ['latin'], 
+  display: 'swap',
+  variable: '--font-inter'
+})
 
 export const metadata: Metadata = {
   title: "Gerador de Procurações para Energia Solar",
@@ -36,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-br">
+    <html lang="pt-br" className={`${inter.variable} ${playfair.variable}`}>
       <body>
         {children}
         <CookieBanner />
