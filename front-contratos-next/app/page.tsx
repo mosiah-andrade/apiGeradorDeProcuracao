@@ -117,7 +117,7 @@ export default function Home() {
 
     try {
       // IMPORTANTE: Configure NEXT_PUBLIC_API_URL no seu .env.local
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://www.asaweb.tech/api/index.php";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       
       const response = await fetch(`${apiUrl}/gerar-contrato/`, {
         method: 'POST',
