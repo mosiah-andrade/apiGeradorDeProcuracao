@@ -1,28 +1,28 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import "./globals.css";
+import "./globals.css"; // <--- VERIFIQUE SE ESTA LINHA EXISTE
 import CookieBanner from "@/components/CookieBanner";
-import { Playfair_Display, Inter, Lato } from 'next/font/google'
+import { Playfair_Display, Inter, Lato } from 'next/font/google';
 
-// Configuração otimizada das fontes
+// Configuração das fontes otimizadas pelo Next.js
 const playfair = Playfair_Display({ 
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-playfair'
-})
+});
 
 const inter = Inter({ 
   subsets: ['latin'], 
   display: 'swap',
   variable: '--font-inter'
-})
+});
 
 const lato = Lato({
   weight: ['300', '400', '700'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-lato'
-})
+});
 
 export const metadata: Metadata = {
   title: "Gerador de Procurações para Energia Solar",
@@ -57,12 +57,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br" className={`${inter.variable} ${playfair.variable} ${lato.variable}`}>
-      <body>
-        {/* --- PRÉ-CONEXÃO PARA O ADSENSE (Correção) --- */}
-        {/* O Next.js move isso automaticamente para o <head> */}
+      <head>
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossOrigin="anonymous" />
-
+      </head>
+      <body>
         {children}
         <CookieBanner />
         
