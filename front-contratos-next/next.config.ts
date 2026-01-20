@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  output: 'export',
+  output: 'export', // Gria uma pasta 'out' com HTML/CSS/JS estático
+  images: {
+    unoptimized: true, // Obrigatório na Hostinger (sem servidor Node para processar imagens)
+  },
+  // Otimização do compilador React
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production", // Remove console.log em produção
+  },
 };
 
 export default nextConfig;
