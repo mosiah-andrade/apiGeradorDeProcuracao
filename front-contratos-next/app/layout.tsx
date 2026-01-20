@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
-import { Playfair_Display, Inter } from 'next/font/google'
+// 1. Importamos a Lato aqui também
+import { Playfair_Display, Inter, Lato } from 'next/font/google'
 
-// Configure as fontes
+// Configuração otimizada das fontes (Next.js baixa e injeta no build)
 const playfair = Playfair_Display({ 
   subsets: ['latin'],
-  display: 'swap', // Importante para performance
+  display: 'swap',
   variable: '--font-playfair'
 })
 
@@ -15,6 +16,14 @@ const inter = Inter({
   subsets: ['latin'], 
   display: 'swap',
   variable: '--font-inter'
+})
+
+// 2. Configuração da Lato (pesos usados no seu CSS: 300, 400, 700)
+const lato = Lato({
+  weight: ['300', '400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-lato'
 })
 
 export const metadata: Metadata = {
@@ -29,7 +38,7 @@ export const metadata: Metadata = {
     siteName: "Gerador Solar",
     images: [
       {
-        url: "/imagem-social-share.png", // Caminho relativo à pasta public
+        url: "/imagem-social-share.png",
         width: 1200,
         height: 630,
       },
@@ -49,11 +58,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-br" className={`${inter.variable} ${playfair.variable}`}>
+    // 3. Adicionamos a variável da Lato na classe do HTML
+    <html lang="pt-br" className={`${inter.variable} ${playfair.variable} ${lato.variable}`}>
       <body>
         {children}
         <CookieBanner />
-        {/* Script do Google AdSense Carregado Manualmente e Otimizado */}
         <Script
           id="adsense-init"
           async

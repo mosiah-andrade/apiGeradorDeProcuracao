@@ -1,7 +1,5 @@
 /* src/App.css */
 
-/* Importando fonte clássica para os títulos (opcional, mas recomendado) */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap');
 
 * {
   box-sizing: border-box; /* Garante que padding não estoure a largura */
