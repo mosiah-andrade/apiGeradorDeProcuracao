@@ -41,7 +41,6 @@ export default async function BlogPage() {
 
   return (
     <div className="page-wrapper">
-      <div className="container container-wide">
         <header>
           <h1>Blog Solar</h1>
           <h2>Últimas Notícias</h2>
@@ -67,14 +66,14 @@ export default async function BlogPage() {
                   
                   {/* Categoria acima do título */}
                   {post.category && (
-                    <span className="blog-category" style={{ alignSelf: 'flex-start' }}>
+                    <span className="blog-category" style={{ alignSelf: 'flex-start', color: 'var(--verde-main)' }}>
                       {post.category}
                     </span>
                   )}
 
-                  <h3 style={{ marginTop: '10px' }}>{post.title}</h3>
+                  <h3 style={{ marginTop: '10px', color: 'var(--bg-page)' }}>{post.title}</h3>
                   
-                  <p style={{ fontSize: '0.95rem', color: 'var(--texto-corpo)' }}>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--bg-page)' }}>
                     {post.excerpt || "Sem resumo disponível."}
                   </p>
                   
@@ -86,7 +85,7 @@ export default async function BlogPage() {
                       {post.author && <span>por {post.author}</span>}
                     </div>
 
-                    <Link href={`/blog/${post.slug.current}`} className="btn-link">
+                    <Link href={`/blog/${post.slug.current}`} className="btn-link" style={{ color: 'var(--verde-main)' }}>
                       Ler mais →
                     </Link>
                   </div>
@@ -99,7 +98,6 @@ export default async function BlogPage() {
               <small>Certifique-se de que publicou os posts no Sanity Studio.</small>
             </div>
           )}
-        </div>
       </div>
     </div>
   );

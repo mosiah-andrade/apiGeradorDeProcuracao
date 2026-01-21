@@ -8,21 +8,30 @@
 }
 
 :root {
-  /* --- PALETA DARK LUXURY (Acessibilidade Melhorada) --- */
-  --bg-page: #0f172a;          /* Azul noturno muito escuro */
-  --bg-card: #1e293b;          /* Cinza azulado escuro (Slate) */
-  --texto-titulo: #f1f5f9;     /* Slate 100 (Mais claro para contraste) */
-  --texto-corpo: #cbd5e1;      /* Slate 300 (Legível em fundo escuro) */
+  /* --- PALETA LIGHT CORPORATE (Alto Contraste) --- */
   
-  /* Verde Esmeralda (Principal / Sucesso) */
-  --verde-main: #059669;       
-  --verde-glow: rgba(16, 185, 129, 0.4);
+  /* FUNDOS */
+  --bg-page: #f0f6fd;          /* Slate 50 (Cinza gelo muito sutil) */
+  --bg-card: #010f28;          /* Branco Puro */
+  
+  /* TIPOGRAFIA - CONTRASTE MÁXIMO */
+  --texto-titulo: #020617;     /* Slate 950 (Preto Absoluto) */
+  --texto-corpo: #0f172a;      /* Slate 900 (Preto Suave - Leitura perfeita) */
+  
+  /* VERDE (Ação Principal) */
+  --verde-main: #059669;       /* Emerald 600 */
+  --verde-text: #065f46;       /* Emerald 800 (Mais escuro para leitura em fundo branco) */
+  --verde-glow: rgba(5, 150, 105, 0.15);
 
-  /* Azul Real (Secundário / Navegação) */
-  --azul-sec: #60a5fa;         /* Azul mais claro para passar contraste */
-  --azul-dark: #1e40af;
+  /* AZUL (Navegação/Secundário) */
+  --azul-sec: #2563eb;         /* Blue 600 */
+  --azul-text: #1e40af;        /* Blue 800 (Mais escuro para leitura) */
+  --azul-dark: #eff6ff;        /* Blue 50 */
+  --azul-600: #1e293b;         /* Blue 50 */
 
-  --borda-fina: #475569;       /* Borda mais visível */
+  /* DETALHES */
+  --borda-fina: #cbd5e1;       /* Slate 300 (Bordas mais definidas) */
+  --borda-focus: #64748b;      /* Slate 500 */
 }
 
 /* =========================================
@@ -30,39 +39,47 @@
    ========================================= */
 body {
   background-color: var(--bg-page);
-  /* Fundo sutil com gradiente */
-  background-image: radial-gradient(circle at top right, #1e293b 0%, #0f172a 60%);
-  
-  /* FONTE OTIMIZADA: Usa a variável do Next.js */
+  background-image: none; 
   font-family: var(--font-lato), sans-serif;
-  
   margin: 0;
   min-height: 100vh;
-  color: var(--texto-titulo);
-
-  /* --- CORREÇÃO DE LAYOUT FLEX --- */
+  color: var(--texto-corpo);
   display: flex;
-  flex-direction: column; /* Garante empilhamento vertical (Navbar em cima, conteúdo em baixo) */
-  align-items: center;    /* Centraliza os filhos horizontalmente */
+  flex-direction: column;
+  align-items: center;
 }
 
-h1 { 
+h1, h2, h3 { 
   font-family: var(--font-playfair), serif;
   color: var(--texto-titulo); 
+}
+
+h1 {
   font-size: 2rem; 
   margin: 0; 
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-h2 { 
-  font-family: var(--font-lato), sans-serif;
-  color: var(--verde-main); 
-  font-size: 0.9rem; 
-  margin-top: 10px; 
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: 400;
+h2 {
+  font-size: 1.75rem;
+  margin: 0 0 15px 0;
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin: 0 0 15px 0;
+}
+
+a {
+  color: var(--verde-main);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-weight: 600; /* Negrito sutil para links */
+}
+a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
 
 /* =========================================
@@ -72,8 +89,8 @@ h2 {
 /* --- NAVBAR --- */
 .navbar {
   width: 100%;
-  background-color: rgba(30, 41, 59, 0.95); /* Slate escuro com transparência */
-  border-bottom: 1px solid var(--borda-fina);
+  background-color: var(--texto-corpo);/* Quase opaco para leitura clara */
+  border-bottom: 1px solid var(--verde-glow);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -105,9 +122,9 @@ h2 {
 }
 
 .nav-item {
-  color: var(--texto-titulo);
+  color: var(--azul-dark);
   text-decoration: none;
-  font-weight: 400;
+  font-weight: 600; /* Mais peso na fonte da navegação */
   font-size: 1rem;
   transition: color 0.3s ease;
   position: relative;
@@ -115,6 +132,7 @@ h2 {
 
 .nav-item:hover {
   color: var(--verde-main);
+  text-decoration: none;
 }
 
 .nav-item::after {
@@ -138,29 +156,34 @@ h2 {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  flex: 1; /* Ocupa o espaço restante da tela */
+  flex: 1; 
+  padding-bottom: 40px;
 }
 
-/* Container Principal (Formulário) */
-.container {
+.blog-content{
+  width: 70%;
+}
+/* Container Genérico (Cards) */
+.container, .modal-content, .blog-card {
   background: var(--bg-card);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--borda-fina);
+  border-radius: 8px;
+}
+
+.container {
   width: 100%;
   max-width: 550px;
   margin: 40px 20px;
   padding: 40px;
-  border-radius: 8px;
-  border: 1px solid var(--borda-fina);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
 }
 
-/* Container Largo (Blog) */
 .container-wide {
   max-width: 1000px !important; 
 }
 
-/* Cabeçalho interno dos containers */
 header {
   text-align: center;
   margin-bottom: 35px;
@@ -169,8 +192,92 @@ header {
 }
 
 /* =========================================
-   4. COMPONENTES: FORMULÁRIO & UI
+   4. ESTILOS DO CONTEÚDO DO SITE (Sobre, FAQ)
    ========================================= */
+
+.conteudo-site {
+  text-align: left;
+  line-height: 1.7; /* Aumentado para facilitar leitura de blocos grandes */
+  color: var(--texto-corpo);
+}
+
+.conteudo-site h2 {
+  font-family: var(--font-playfair), serif;
+  color: var(--texto-titulo);
+  font-size: 1.5rem;
+  border-left: 4px solid var(--verde-main);
+  padding-left: 15px;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.conteudo-site p {
+  margin-bottom: 15px;
+  font-size: 1.05rem; /* Texto ligeiramente maior */
+}
+
+.conteudo-site ul, 
+.conteudo-site ol {
+  margin-bottom: 25px;
+  padding-left: 20px;
+}
+
+.conteudo-site li {
+  margin-bottom: 10px;
+}
+
+/* --- ETIQUETAS (TAGS) --- */
+.tags-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  list-style: none !important;
+  padding: 0 !important;
+  margin-top: 10px;
+}
+
+.tags-list li {
+  background-color: #f1f5f9;
+  color: var(--texto-titulo);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700; /* Negrito nas tags */
+  border: 1px solid var(--borda-fina);
+  margin-bottom: 0;
+}
+/* =========================================
+   5. COMPONENTES: FORMULÁRIO & UI (Estilo Dark Luxury)
+   ========================================= */
+
+/* O Container do Form agora é ESCURO para imitar a foto */
+.container {
+  /* Fundo Azul Escuro Profundo (igual à imagem) */
+  background-color: #111827; /* ou #0f172a para um tom mais azulado */
+  border: 1px solid #1f2937; /* Borda sutil escura */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); /* Sombra forte para destaque */
+  color: white; /* Texto base branco */
+  
+  /* Mantém layout */
+  width: 100%;
+  max-width: 550px;
+  margin: 40px 20px;
+  padding: 40px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Forçar títulos dentro do form a serem brancos */
+.container h1,  .container h3 {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.container h2{  
+  color: var(--verde-main);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 25px;
+}
 
 /* --- BARRA DE PROGRESSO --- */
 .progress-bar {
@@ -181,12 +288,13 @@ header {
 }
 
 .step {
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    background-color: var(--bg-page);
-    border: 2px solid var(--borda-fina);
-    color: var(--texto-corpo);
+    /* Fundo do passo inativo (transparente com borda azulada) */
+    background-color: transparent; 
+    border: 1px solid #3b82f6; 
+    color: #3b82f6; /* Número azul */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -198,34 +306,32 @@ header {
 }
 
 .step.active {
-    border-color: var(--azul-sec);
-    background-color: var(--bg-card);
-    color: var(--azul-sec);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    background-color: #3b82f6; /* Azul brilhante quando ativo */
+    color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); /* Glow azul */
 }
 
 .line {
     width: 50px;
     height: 1px;
-    background-color: var(--borda-fina);
+    background-color: #1f2937; /* Linha escura entre os passos */
     margin: 0 5px;
 }
 
-/* --- INPUTS E LABELS --- */
-.form-group { margin-bottom: 20px; }
-
-.row {
-    display: flex;
-    gap: 20px;
-}
-
+/* --- INPUTS & LABELS (Adaptados para fundo escuro) --- */
+.form-group { margin-bottom: 25px; }
+.row { display: flex; gap: 20px; }
 .half { flex: 1; }
 
 label {
   display: block;
-  margin-bottom: 8px;
-  color: var(--texto-corpo);
+  margin-bottom: 10px;
+  /* Cor do label: Cinza claro/prata para contraste no fundo escuro */
+  color: #94a3b8; 
   font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase; /* Opcional: deixa mais elegante */
   letter-spacing: 0.5px;
 }
 
@@ -234,31 +340,58 @@ input, select {
   padding: 12px 0;
   background-color: transparent;
   border: none;
-  border-bottom: 1px solid var(--borda-fina);
-  color: #ffffff;
+  /* Linha inferior cinza escura */
+  border-bottom: 1px solid #374151; 
+  /* Texto digitado: BRANCO */
+  color: #ffffff; 
   font-family: var(--font-lato), sans-serif;
   font-size: 16px;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-bottom: 1px solid var(--verde-main);
-  background: linear-gradient(to bottom, transparent 95%, rgba(16, 185, 129, 0.1) 100%);
+  border-bottom: 1px solid #3b82f6; /* Azul ao focar */
+  background: linear-gradient(to bottom, transparent 95%, rgba(59, 130, 246, 0.1) 100%);
 }
 
-input::placeholder {
-  color: #64748b;
+/* Placeholder (texto de exemplo) */
+input::placeholder { 
+  color: #4b5563; /* Cinza escuro discreto */
+  font-weight: 400; 
 }
 
-option {
-    background-color: var(--bg-page);
-    color: white;
+/* Opções do Select (precisam ter fundo escuro senão ficam brancas no navegador) */
+option { 
+  background-color: #111827; 
+  color: white; 
 }
 
-.divider { margin: 30px 0; border: 0; border-top: 1px solid var(--borda-fina); }
-.subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 15px; font-style: italic; }
+.divider { 
+  margin: 30px 0; 
+  border: 0; 
+  border-top: 1px solid #374151; 
+}
 
+/* --- BOTÃO "PRÓXIMO" (Estilo Outline da foto) --- */
+.btn-primary { 
+  background-color: transparent;
+  border: 1px solid #3b82f6; /* Borda azul */
+  color: #3b82f6; /* Texto azul */
+  padding: 15px;
+  width: 100%;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover { 
+  background-color: rgba(59, 130, 246, 0.1); /* Fundo azul bem suave ao passar o mouse */
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
 /* --- BOTÕES --- */
 .button-group {
     display: flex;
@@ -282,54 +415,54 @@ button {
 
 .btn-primary { 
   background-color: transparent;
-  border: 1px solid var(--azul-sec);
+  border: 2px solid var(--azul-sec); /* Borda mais grossa */
   color: var(--azul-sec);
 }
 .btn-primary:hover { 
-  background-color: rgba(96, 165, 250, 0.1);
-  box-shadow: 0 0 15px rgba(96, 165, 250, 0.2);
+  opacity: 0.9;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 .btn-secondary { 
   background-color: transparent;
-  color: var(--texto-corpo);
+  color: var(--azul-dark);
+  border: 1px solid var(--borda-fina);
 }
 .btn-secondary:hover { 
-  color: white;
+  opacity: 0.9;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+  border-color: #94a3b8;
 }
 
 .btn-success { 
   background: linear-gradient(135deg, var(--verde-main) 0%, #047857 100%);
   color: white; 
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
 }
 .btn-success:hover { 
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--verde-glow);
+  box-shadow: 0 6px 15px rgba(5, 150, 105, 0.4);
 }
 
 button:disabled { 
   background: var(--borda-fina);
-  color: #64748b;
+  color: #94a3b8;
   cursor: not-allowed; 
   box-shadow: none;
 }
 
 .btn-link {
-  color: var(--verde-main);
+  color: var(--verde-text);
   text-decoration: none;
-  font-weight: bold;
-  font-size: 0.9rem;
-  transition: color 0.3s;
+  font-weight: 800; /* Mais destaque nos links de ação */
+  font-size: 0.95rem;
 }
-
-.btn-link:hover {
-  color: #34d399; /* Verde mais claro */
-}
+.btn-link:hover { opacity: 0.8; }
 
 /* =========================================
-   5. COMPONENTES: BLOG
+   6. COMPONENTES: BLOG & SHARE
    ========================================= */
+
 .blog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -338,46 +471,30 @@ button:disabled {
 }
 
 .blog-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--borda-fina);
-  border-radius: 8px;
-  padding: 25px;
+  padding: 0; 
+  overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
 }
 
 .blog-card:hover {
   transform: translateY(-5px);
   border-color: var(--azul-sec);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .blog-category {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--azul-sec);
+  color: var(--azul-text);
   border: 1px solid var(--azul-sec);
   padding: 4px 10px;
   border-radius: 20px;
   margin-bottom: 15px;
-}
-
-.blog-card h3 {
-  font-family: var(--font-playfair), serif;
-  color: var(--texto-titulo);
-  margin: 0 0 15px 0;
-  font-size: 1.4rem;
-}
-
-.blog-card p {
-  color: var(--texto-corpo);
-  line-height: 1.6;
-  font-size: 0.95rem;
-  margin-bottom: 20px;
-  flex-grow: 1;
+  display: inline-block;
+  font-weight: 700;
 }
 
 .blog-footer {
@@ -394,10 +511,58 @@ button:disabled {
   font-size: 0.85rem;
   color: #64748b;
   font-style: italic;
+  font-weight: 500;
+}
+
+/* --- BOTÕES DE PARTILHA --- */
+.share-container {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borda-fina);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.share-label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--texto-titulo);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.share-icons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--borda-fina);
+  color: var(--azul-dark);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.share-btn:hover {
+  transform: translateY(-3px);
+  color: white !important;
+  border-color: transparent;
 }
 
 /* =========================================
-   6. COMPONENTES: MODAL & OUTROS
+   7. MODAL & UTILITÁRIOS
    ========================================= */
 .modal-overlay {
     position: fixed;
@@ -405,7 +570,7 @@ button:disabled {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.7); /* Fundo mais escuro para focar no modal */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -414,31 +579,13 @@ button:disabled {
 }
 
 .modal-content {
-    background: var(--bg-card);
     padding: 30px;
-    border-radius: 8px;
     border: 1px solid var(--verde-main);
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
     width: 90%;
     max-width: 400px;
     text-align: center;
-    color: var(--texto-titulo);
 }
 
-.modal-content h3 {
-    color: var(--verde-main);
-    font-family: var(--font-playfair), serif;
-    margin-top: 0;
-}
-
-.ad-container {
-    margin: 20px 0;
-    border: 1px dashed #444;
-    padding: 10px;
-    background: #000;
-}
-
-/* --- ANIMAÇÕES --- */
 .step-content {
     animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -449,10 +596,9 @@ button:disabled {
 }
 
 /* =========================================
-   7. RESPONSIVIDADE (MOBILE)
+   8. RESPONSIVIDADE (MOBILE)
    ========================================= */
 @media (max-width: 600px) {
-  /* Layout e Container */
   .container {
     width: 95% !important;
     max-width: 100% !important;
@@ -460,34 +606,77 @@ button:disabled {
     padding: 20px 15px !important;
   }
 
-  /* Navbar Mobile */
-  .nav-content {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  /* Formulário Mobile */
+  .nav-content { flex-direction: column; gap: 15px; }
   .row { display: block !important; }
   .half { width: 100% !important; margin-bottom: 15px; display: block; }
+  input, select { width: 100% !important; font-size: 16px; }
+  header h1 { font-size: 1.5rem; margin-bottom: 10px; }
+  .button-group { flex-direction: column; gap: 10px; }
+  .button-group button { width: 100%; padding: 12px; }
+  .share-container { flex-direction: column; align-items: center; gap: 15px; margin-top: 30px; }
+  .share-icons { width: 100%; justify-content: center; gap: 15px; }
+  .share-btn { width: 48px; height: 48px; font-size: 1.2rem; }
+}
 
-  input, select {
-    width: 100% !important;
-    font-size: 16px;
-  }
+/* --- ESTILOS DO CONTEÚDO (Adicione ao final do CSS) --- */
 
-  header h1 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-  }
+/* Container geral do texto */
+.conteudo-site {
+  text-align: left;
+  line-height: 1.6; /* Aumenta o espaço entre linhas */
+  color: var(--texto-corpo, #334155); /* Usa cor padrão se a variável falhar */
+  width: 70%;
+}
+
+/* Espaçamento dos Títulos (h2) */
+.conteudo-site h2 {
+  font-family: var(--font-playfair, serif);
+  color: var(--texto-titulo, #0f172a);
+  font-size: 1.5rem;
   
-  /* Botões Mobile */
-  .button-group {
-    flex-direction: column;
-    gap: 10px;
-  }
+  /* A Borda Verde Lateral */
+  border-left: 4px solid var(--verde-main, #059669);
+  padding-left: 15px;
   
-  .button-group button {
-    width: 100%;
-    padding: 12px;
-  }
+  /* Margens para desgrudar */
+  margin-top: 40px;    /* Espaço grande em cima */
+  margin-bottom: 20px; /* Espaço médio em baixo */
+}
+
+/* Espaçamento dos Parágrafos */
+.conteudo-site p {
+  margin-bottom: 20px; /* Espaço entre parágrafos */
+  font-size: 1.05rem;
+}
+
+/* Espaçamento das Listas (ul, ol) */
+.conteudo-site ul, 
+.conteudo-site ol {
+  margin-bottom: 30px;
+  padding-left: 20px;
+}
+
+.conteudo-site li {
+  margin-bottom: 10px; /* Espaço entre itens da lista */
+}
+
+/* Estilo das Etiquetas (Tags) das Concessionárias */
+.tags-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  list-style: none !important;
+  padding: 0 !important;
+  margin-top: 15px;
+}
+
+.tags-list li {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  margin-bottom: 0; /* Remove margem extra */
 }

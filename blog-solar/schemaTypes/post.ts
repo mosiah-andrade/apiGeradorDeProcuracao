@@ -5,6 +5,7 @@ export default defineType({
   title: 'Post',
   type: 'document',
   fields: [
+    
     defineField({
       name: 'title',
       title: 'Title',
@@ -18,6 +19,14 @@ export default defineType({
         source: 'title',
         maxLength: 96,
       },
+    }),
+    defineField({
+      name: 'excerpt',
+      title: 'Resumo (Excerpt)',
+      type: 'text',
+      rows: 3,
+      description: 'Um pequeno resumo para aparecer nos cards do blog e no Google (SEO).',
+      validation: Rule => Rule.max(200).warning('Mantenha o resumo curto para melhor visualização.'),
     }),
     defineField({
       name: 'author',

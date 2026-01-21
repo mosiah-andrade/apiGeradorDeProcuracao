@@ -132,7 +132,7 @@ export default function Home() {
   return (
     // FIX 1: Trocado div por main para "Landmark"
     <main className="page-wrapper">
-      <div className="container">
+      <div className="container form">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <header>
           <h1>Gerador de Procuração para Energia Solar</h1>

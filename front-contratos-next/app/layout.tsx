@@ -4,6 +4,7 @@ import "./globals.css"; // <--- VERIFIQUE SE ESTA LINHA EXISTE
 import CookieBanner from "@/components/CookieBanner";
 import { Playfair_Display, Inter, Lato } from 'next/font/google';
 import Navbar from "@/components/Navbar";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 // Configuração das fontes otimizadas pelo Next.js
 const playfair = Playfair_Display({ 
@@ -78,6 +79,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="lazyOnload"
         />
+        <GoogleAnalytics gaId="G-BLV25S4PX9" />
       </body>
     </html>
   );
