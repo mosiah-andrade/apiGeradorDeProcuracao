@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css"; // <--- VERIFIQUE SE ESTA LINHA EXISTE
 import CookieBanner from "@/components/CookieBanner";
 import { Playfair_Display, Inter, Lato } from 'next/font/google';
+import Navbar from "@/components/Navbar";
 
 // Configuração das fontes otimizadas pelo Next.js
 const playfair = Playfair_Display({ 
@@ -25,6 +26,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://asaweb.tech'),
   title: "Gerador de Procurações para Energia Solar",
   description: "Ferramenta para gerar procurações de energia solar fotovoltaica para concessionárias.",
   keywords: ["energia solar", "homologação", "procuração celpe", "integrador solar"],
@@ -62,9 +64,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossOrigin="anonymous" />
       </head>
       <body>
-        {children}
+        <Navbar />
+        <main className="page-wrapper">
+          {children}
+        </main>
+
         <CookieBanner />
-        
+        <p className="footer-note">© {new Date().getFullYear()} AsaWeb Tech. Todos os direitos reservados. <a href="/politica-de-privacidade" style={{color: '#007bff'}}>Política de Privacidade</a></p>
         <Script
           id="adsense-init"
           async

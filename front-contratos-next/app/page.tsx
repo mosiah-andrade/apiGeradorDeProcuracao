@@ -233,7 +233,7 @@ export default function Home() {
         </form>
       </div>
       <ConteudoSite />
-      <p className="footer-note">© 2026 AsaWeb Tech. Todos os direitos reservados. <a href="/politica-de-privacidade">Política de Privacidade</a></p>
+      
       {showAdModal && (
           <div className="modal-overlay">
               <div className="modal-content">
