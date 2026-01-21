@@ -35,7 +35,7 @@ jobs:
       # ---------------------------------------------------------
       - name: 📦 Instalar Dependências (Next.js)
         working-directory: ./front-contratos-next
-        run: npm ci # Instalação limpa e rápida
+        run: npm install --legacy-peer-deps
 
       - name: 🏗️ Construir Site (Build)
         working-directory: ./front-contratos-next
