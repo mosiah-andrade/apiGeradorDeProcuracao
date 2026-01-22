@@ -10,8 +10,8 @@ export default async function BlogPage() {
   const posts = await getPosts();
 
   return (
-    <div className="container container-wide">
-      <header style={{textAlign: 'center', marginBottom: '50px'}}>
+    <div className="">
+      <header style={{textAlign: 'center', marginBottom: '50px', paddingTop: '30px'}}>
         <h1>Blog Solar</h1>
         <p style={{fontSize: '1.2rem', color: '#64748b'}}>Notícias e dicas sobre homologação e energia solar.</p>
       </header>

@@ -30,7 +30,7 @@ export default async function PostPage({ params }: Props) {
   }
 
   return (
-    <div className="container container-wide">
+    <div className="" style={{maxWidth: '80%', padding: '20px', margin: '0 auto'}}  >
       <Link href="/blog" className="btn-link" style={{marginBottom: '20px', display:'inline-block'}}>
         &larr; Voltar para o Blog
       </Link>
@@ -56,7 +56,7 @@ export default async function PostPage({ params }: Props) {
           </div>
         </header>
 
-        <div className="conteudo-site">
+        <div className="conteudo-site" >
           <PortableText value={post.body} />
         </div>
 
