@@ -1,103 +1,54 @@
-// app/blog/page.tsx
-import { client } from "@/app/lib/sanity";
-import Link from "next/link";
-import { Metadata } from "next";
+import Link from 'next/link';
+import Image from 'next/image';
+import { getPosts } from '../lib/posts';
+import { urlFor } from '../lib/sanity';
 
-export const metadata: Metadata = {
-  title: "Blog Solar - Notícias e Dicas",
-  description: "Fique por dentro das novidades do mercado de energia solar.",
-};
-
-// Interface atualizada com os novos campos
-interface SanityPost {
-  _id: string;
-  title: string;
-  slug: { current: string };
-  publishedAt: string;
-  excerpt: string;
-  imageUrl?: string;      // Campo opcional para imagem
-  author?: string;        // Campo opcional para autor
-  category?: string;      // Campo opcional para a primeira categoria
-}
-
-// Query atualizada para buscar Imagem, Autor e Categoria
-async function getPosts() {
-  const query = `*[_type == "post"] | order(publishedAt desc) {
-    _id,
-    title,
-    slug,
-    publishedAt,
-    "excerpt": array::join(string::split((pt::text(body)), "")[0..150], "") + "...",
-    "imageUrl": mainImage.asset->url,
-    "author": author->name,
-    "category": categories[0]->title
-  }`;
-  
-  return await client.fetch<SanityPost[]>(query);
-}
+// Força a página a ser estática
+export const dynamic = 'force-static';
 
 export default async function BlogPage() {
   const posts = await getPosts();
 
   return (
-    <div className="page-wrapper">
-        <header>
-          <h1>Blog Solar</h1>
-          <h2>Últimas Notícias</h2>
-        </header>
+    <div className="container container-wide">
+      <header style={{textAlign: 'center', marginBottom: '50px'}}>
+        <h1>Blog Solar</h1>
+        <p style={{fontSize: '1.2rem', color: '#64748b'}}>Notícias e dicas sobre homologação e energia solar.</p>
+      </header>
 
-        <div className="blog-grid">
-          {posts.length > 0 ? (
-            posts.map((post) => (
-              <article key={post._id} className="blog-card" style={{ padding: 0, overflow: 'hidden' }}>
-                
-                {/* --- IMAGEM DE CAPA NO CARD --- */}
-                {post.imageUrl && (
-                  <div style={{ width: '100%', height: '200px', overflow: 'hidden' }}>
-                    <img 
-                      src={post.imageUrl} 
-                      alt={post.title} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                )}
-
-                <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
-                  
-                  {/* Categoria acima do título */}
-                  {post.category && (
-                    <span className="blog-category" style={{ alignSelf: 'flex-start', color: 'var(--verde-main)' }}>
-                      {post.category}
-                    </span>
-                  )}
-
-                  <h3 style={{ marginTop: '10px', color: 'var(--bg-page)' }}>{post.title}</h3>
-                  
-                  <p style={{ fontSize: '0.95rem', color: 'var(--bg-page)' }}>
-                    {post.excerpt || "Sem resumo disponível."}
-                  </p>
-                  
-                  <div className="blog-footer" style={{ marginTop: 'auto' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: '#94a3b8' }}>
-                      <span className="blog-date">
-                        {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString("pt-BR") : ""}
-                      </span>
-                      {post.author && <span>por {post.author}</span>}
-                    </div>
-
-                    <Link href={`/blog/${post.slug.current}`} className="btn-link" style={{ color: 'var(--verde-main)' }}>
-                      Ler mais →
-                    </Link>
-                  </div>
+      <div className="blog-grid">
+        {posts.map((post: any) => (
+          <Link href={`/blog/${post.slug.current}`} key={post._id} className="blog-card" style={{textDecoration: 'none', color: 'inherit'}}>
+            {post.mainImage && (
+              <div style={{position: 'relative', width: '100%', height: '200px'}}>
+                <Image
+                  src={urlFor(post.mainImage).url()}
+                  alt={post.title}
+                  fill
+                  style={{objectFit: 'cover'}}
+                />
+              </div>
+            )}
+            <div style={{padding: '20px', display: 'flex', flexDirection: 'column', flex: 1}}>
+              {post.categories && post.categories.length > 0 && (
+                <div>
+                   <span className="blog-category">{post.categories[0].title}</span>
                 </div>
-              </article>
-            ))
-          ) : (
-            <div style={{ textAlign: "center", width: "100%", padding: "40px" }}>
-              <p>Nenhum artigo encontrado.</p>
-              <small>Certifique-se de que publicou os posts no Sanity Studio.</small>
+              )}
+              <h3 style={{fontSize: '1.2rem', margin: '10px 0', lineHeight: '1.4'}}>{post.title}</h3>
+              <p style={{fontSize: '0.95rem', color: '#64748b', marginBottom: '20px', flex: 1}}>
+                {post.body?.[0]?.children?.[0]?.text?.substring(0, 100)}...
+              </p>
+              
+              <div className="blog-footer">
+                <span className="blog-date">
+                  {new Date(post.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+                <span style={{color: 'var(--verde-main)', fontWeight: 700, fontSize: '0.9rem'}}>Ler Mais &rarr;</span>
+              </div>
             </div>
-          )}
+          </Link>
+        ))}
       </div>
     </div>
   );

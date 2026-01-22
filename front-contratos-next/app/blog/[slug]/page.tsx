@@ -1,89 +1,70 @@
-// app/blog/[slug]/page.tsx
-import { client } from "@/app/lib/sanity";
-import { PortableText } from "@portabletext/react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import ShareButtons from "@/components/ShareButtons"; // Certifique-se que importou
+import { PortableText } from '@portabletext/react';
+import { getPost, getPosts } from '../../lib/posts'; // Ajuste o caminho se necessário
+import { urlFor } from '../../lib/sanity';
+import Image from 'next/image';
+import { notFound } from 'next/navigation';
+import ShareButtons from '@/components/ShareButtons';
+import Link from 'next/link';
 
-// 1. Gera as páginas estáticas
+// 1. GERAÇÃO ESTÁTICA DAS PÁGINAS (OBRIGATÓRIO NA HOSTINGER)
 export async function generateStaticParams() {
-  const query = `*[_type == "post"]{ "slug": slug.current }`;
-  const posts = await client.fetch(query);
-
-  return posts.map((post: { slug: string }) => ({
-    slug: post.slug,
+  const posts = await getPosts(); // Busca todos os posts
+  return posts.map((post: any) => ({
+    slug: post.slug.current, // Gera uma página para cada slug
   }));
 }
 
-// 2. Busca o post no Sanity
-async function getPost(slug: string) {
-  const query = `*[_type == "post" && slug.current == $slug][0]{
-    title,
-    publishedAt,
-    body,
-    "imageUrl": mainImage.asset->url,
-    "imageAlt": mainImage.alt,
-    "author": author->name,
-    "categories": categories[]->title
-  }`;
-  
-  return await client.fetch(query, { slug });
-}
+// 2. TIPO DOS PARÂMETROS
+type Props = {
+  params: Promise<{ slug: string }>; // Params agora é uma Promise no Next.js 15
+};
 
-// 3. Componente da Página (CORRIGIDO)
-// Note a tipagem 'Promise' nos params para Next.js 16
-export default async function BlogPostPage(props: { params: Promise<{ slug: string }> }) {
-  
-  // AQUI ESTÁ A CORREÇÃO:
-  // Precisamos "esperar" (await) os params para pegar o slug
-  const params = await props.params; 
-  const slug = params.slug; 
-
-  const post = await getPost(slug);
+// 3. PÁGINA DO POST
+export default async function PostPage({ params }: Props) {
+  // Await nos params antes de usar (Regra nova do Next.js 15)
+  const resolvedParams = await params;
+  const post = await getPost(resolvedParams.slug);
 
   if (!post) {
     notFound();
   }
 
   return (
-    <div className="page-wrapper blog-content">
-        <header style={{ textAlign: 'left', border: 'none' }}>
-          <Link href="/blog" className="btn-link" style={{color: 'var(--verde-main)'}}>← Voltar para o Blog</Link>
-          
-          {post.categories && (
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-               {post.categories.map((cat: string, index: number) => (
-                 <span key={index} className="blog-category">{cat}</span>
-                ))}
-             </div>
-          )}
+    <div className="container container-wide">
+      <Link href="/blog" className="btn-link" style={{marginBottom: '20px', display:'inline-block'}}>
+        &larr; Voltar para o Blog
+      </Link>
 
-          <h1 style={{ marginTop: '15px', fontSize: '2.5rem' }}>{post.title}</h1>
-          
-          <div style={{ display: 'flex', gap: '20px', color: '#5a6068', fontSize: '0.9rem', marginTop: '10px', fontStyle: 'italic' }}>
-            <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString("pt-BR") : ""}</span>
-            {post.author && <span>• Por {post.author}</span>}
-          </div>
-          <ShareButtons title={post.title} url={slug} />
-        </header>
-
-        <div className="divider"></div>
-
-        {post.imageUrl && (
-          <div style={{ marginBottom: '40px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--borda-fina)' }}>
-            <img 
-              src={post.imageUrl} 
-              alt={post.imageAlt || post.title} 
-              style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover', maxHeight: '500px' }} 
+      <article className="blog-content" style={{margin: '0 auto'}}>
+        {post.mainImage && (
+          <div style={{ position: 'relative', width: '100%', height: '400px', marginBottom: '30px', borderRadius: '8px', overflow: 'hidden' }}>
+            <Image
+              src={urlFor(post.mainImage).url()}
+              alt={post.title}
+              fill
+              style={{ objectFit: 'cover' }}
+              priority
             />
           </div>
         )}
 
-        <article className="post-content" style={{ lineHeight: '1.8', color: 'var(--texto-corpo)', fontSize: '1.1rem' }}>
+        <header style={{marginBottom: '30px', borderBottom: '1px solid #e2e8f0', paddingBottom: '20px'}}>
+          <h1 style={{fontSize: '2.5rem', marginBottom: '10px'}}>{post.title}</h1>
+          <div style={{display: 'flex', gap: '15px', color: '#64748b', fontSize: '0.9rem'}}>
+            <span>Por: {post.author?.name || 'Redação'}</span>
+            <span>{new Date(post.publishedAt).toLocaleDateString('pt-BR')}</span>
+          </div>
+        </header>
+
+        <div className="conteudo-site">
           <PortableText value={post.body} />
-        </article>
+        </div>
 
-
+        <ShareButtons 
+          title={post.title} 
+          url={`https://asaweb.tech/blog/${resolvedParams.slug}`} 
+        />
+      </article>
     </div>
   );
 }
