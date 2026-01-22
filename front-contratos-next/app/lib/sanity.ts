@@ -1,6 +1,6 @@
 // app/lib/sanity.ts
-import { createClient } from "next-sanity";
-import createImageUrlBuilder from '@sanity/image-url'; // <-- Mudou aqui
+import { createClient } from "@sanity/client";
+import { createImageUrlBuilder } from '@sanity/image-url';
 
 export const client = createClient({
   projectId: "h5k6om8h", 
@@ -9,7 +9,6 @@ export const client = createClient({
   useCdn: false, 
 });
 
-// Configuração atualizada
 const builder = createImageUrlBuilder(client);
 
 export function urlFor(source: any) {
