@@ -3,7 +3,7 @@ import React from 'react';
 
 const ConteudoSite = () => {
   return (
-    <div className="conteudo-site">
+    <div className="conteudo-site" style={{maxWidth: '850px', padding: '20px', margin: '0 auto'}}>
       <h2>Sobre o Gerador de Procurações</h2>
       <p>
         A ferramenta foi desenvolvida para agilizar o processo de homologação de sistemas fotovoltaicos. 
