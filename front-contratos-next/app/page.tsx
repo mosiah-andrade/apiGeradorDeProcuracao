@@ -241,7 +241,7 @@ export default function Home() {
                   <p>Aguarde <strong>{timeLeft}</strong> segundos para o download iniciar.</p>
                   <div className="ad-container"><AdSenseBanner /></div>
                   {readyToDownload && <p style={{color: '#10b981', marginTop: '10px'}}>Download iniciado!</p>}
-                  {readyToDownload && <button onClick={() => setShowAdModal(false)} className="btn-secondary" style={{marginTop: '15px'}}>Fechar</button>}
+                  {readyToDownload && <button onClick={() => setShowAdModal(false)} className="btn-secondary" style={{marginTop: '15px', color: '#10b981'}}>Fechar</button>}
               </div>
           </div>
       )}
