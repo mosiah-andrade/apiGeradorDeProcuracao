@@ -1,15 +1,18 @@
 import { MetadataRoute } from 'next';
-import { client } from './lib/sanity'; // Importa sua configuração do Sanity
+import { client } from './lib/sanity';
+
+// --- ADICIONE ESTA LINHA ---
+export const dynamic = 'force-static'; 
+// Isso avisa ao Next.js: "Gere este arquivo no build e não mude mais."
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://asaweb.tech';
 
   // 1. Busca todos os posts no Sanity
-  // Pega o slug e a data de atualização (_updatedAt)
   const query = `*[_type == "post"]{ "slug": slug.current, _updatedAt }`;
   const posts = await client.fetch(query);
 
-  // 2. Mapeia os posts para o formato do sitemap
+  // 2. Mapeia os posts
   const blogUrls = posts.map((post: any) => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: new Date(post._updatedAt),
@@ -17,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // 3. Define as rotas estáticas (Home, etc)
+  // 3. Rotas estáticas
   const staticRoutes = [
     {
       url: baseUrl,
@@ -39,6 +42,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 4. Junta tudo
   return [...staticRoutes, ...blogUrls];
 }
