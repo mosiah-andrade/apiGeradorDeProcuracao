@@ -16,7 +16,21 @@ if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
 }
 
 // CORS: Permite que seu frontend acesse (ajuste o domínio em produção)
-header("Access-Control-Allow-Origin: https://asaweb.tech"); 
+$origem = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Lista de domínios permitidos
+$origensPermitidas = [
+    'https://asaweb.tech',
+    'http://localhost:3000', // Adicione esta linha para testar localmente
+    'http://localhost:3001'
+];
+
+if (in_array($origem, $origensPermitidas)) {
+    header("Access-Control-Allow-Origin: $origem");
+} else {
+    // Fallback ou bloqueia
+    header("Access-Control-Allow-Origin: https://asaweb.tech");
+}
 header("Access-Control-Allow-Headers: Content-Type, X-API-KEY"); // Importante: Aceitar o header da chave
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");

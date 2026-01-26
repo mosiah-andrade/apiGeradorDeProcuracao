@@ -1,6 +1,20 @@
+// {
+//   "tipo": "declaracao_posse",
+//   "Proprietário": "Maria Silva",
+//   "CPF_proprietario": "123.456.789-00",
+//   "RG-proprietario": "12.345.678-9",
+//   "Endereco": "Rua das Flores, 123,São Paulo, SP, 01234-567",
+//   "Inicio_permanencia": "01/01/2024",
+//   "Nome_documento": "Declaração de Posse de Imóvel",
+//   "Município": "São Paulo",
+//   "Dia": "15",
+//   "Mes": "Março",
+//   "Ano": "2024",
+//   "Motivo": "Comprovação de residência"
+// }
+
 {
-  "arquivo_modelo": "modelo_pf.docx",
-  "Proprietário": "Maria Silva",
-  "endereco": "Rua das Flores, 123",
-  "cidade": "São Paulo"
+  "arquivo_modelo": "modelo_declaracao.docx",
+  "nome": "Teste Generico",
+  "endereco": "Rua Livre"
 }

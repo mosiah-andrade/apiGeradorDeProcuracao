@@ -5,8 +5,7 @@ import ReactGA from "react-ga4";
 import ConteudoSite from '../components/ConteudoSite';
 import AdSenseBanner from '../components/AdSenseBanner';
 
-// ... (Mantenha as interfaces e funções auxiliares formatarCpfCnpj, etc. iguais) ...
-// --- RECOLE AS FUNÇÕES DE FORMATAÇÃO AQUI SE NECESSÁRIO (formatarCpfCnpj, formatarCep, formatarRG) ---
+// --- FUNÇÕES DE FORMATAÇÃO (MANTIDAS) ---
 const formatarCpfCnpj = (value: string) => {
   const apenasNumeros = value.replace(/\D/g, '');
   const numerosLimitados = apenasNumeros.slice(0, 14);
@@ -38,7 +37,6 @@ interface FormData {
 }
 
 export default function Home() {
-  // ... (Mantenha os states e useEffects iguais) ...
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [showAdModal, setShowAdModal] = useState(false);
@@ -58,51 +56,125 @@ export default function Home() {
   });
 
   useEffect(() => {
-    ReactGA.initialize("G-BLV25S4PX9");
+    // Insira seu ID do GA4 aqui
+    ReactGA.initialize("G-XXXXXXXXXX");
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
   }, []);
 
+  // --- TIMER E DOWNLOAD ---
   useEffect(() => {
     let timer: NodeJS.Timeout;
+
+    // Se o modal está aberto e ainda tem tempo
     if (showAdModal && timeLeft > 0) {
       timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft === 0 && showAdModal) {
-      setReadyToDownload(true);
-      if (downloadBlob) baixarArquivoReal(downloadBlob);
+    } 
+    // Se o tempo acabou e o arquivo já chegou da API
+    else if (timeLeft === 0 && showAdModal && downloadBlob) {
+      if (!readyToDownload) {
+          setReadyToDownload(true);
+          baixarArquivoReal(downloadBlob);
+      }
     }
+    
     return () => clearTimeout(timer);
-  }, [showAdModal, timeLeft, downloadBlob]);
+  }, [showAdModal, timeLeft, downloadBlob, readyToDownload]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let novoValor = value;
+    
     if (name.includes('cpf')) novoValor = formatarCpfCnpj(value);
     else if (name === 'cep') novoValor = formatarCep(value);
     else if (name.includes('rg')) novoValor = formatarRG(value);
     else if (name.includes('orgao')) novoValor = value.toUpperCase();
+    
     setFormData(prev => ({ ...prev, [name]: novoValor }));
   };
 
   const nextStep = () => setStep(c => c + 1);
   const prevStep = () => setStep(c => c - 1);
 
+  // --- CRUCIAL: MAPEAMENTO PARA O WORD ---
+  const prepararPayloadParaAPI = () => {
+    const documentoLimpo = formData.cpf.replace(/\D/g, '');
+    const isPJ = documentoLimpo.length > 11;
+    const arquivoModelo = isPJ ? 'modelo_pj-celpe.docx' : 'modelo_pf-celpe.docx';
+
+    const dataHoje = new Date();
+    const meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+    return {
+      arquivo_modelo: arquivoModelo,
+      
+      // --- DADOS GERAIS ---
+      NOME: formData.nome,
+      CPF: formData.cpf,
+      RG: formData.rg,
+      ORGAO_EMISSOR: formData.orgao_emissor,
+      ENDERECO: formData.endereco,
+      CIDADE: formData.cidade,
+      BAIRRO: formData.bairro,
+      CEP: formData.cep,
+      
+      // --- DADOS ESPECÍFICOS DO REPRESENTANTE (Verifique se isto está aqui!) ---
+      REPRESENTANTE: formData.representante, 
+      CPF_DO_REPRESENTANTE: formData.cpf_representante,
+      
+      // --- DADOS TÉCNICOS ---
+      CONTACONTRATO: formData.contacontrato,
+      CLASSIFICACAO: formData.classificacao,
+      
+      // --- DADOS DO PROCURADOR ---
+      NOME_CONTRATADO: formData.nome_CONTRATADO,
+      RG_CONTRATADO: formData.rg_CONTRATADO,
+      ORGAO_EMISSOR_CONTRATADO: formData.orgao_emissor_CONTRATADO,
+      CPF_CONTRATADO: formData.cpf_CONTRATADO,
+      ENDERECO_CONTRATADO: formData.endereco_CONTRATADO,
+
+      // --- DATAS ---
+      DIA: dataHoje.getDate().toString(),
+      MES: meses[dataHoje.getMonth()],
+      ANO: dataHoje.getFullYear().toString(),
+    };
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (step < 2) { nextStep(); return; }
     
+    // Resetando estados
+    setReadyToDownload(false);
+    setDownloadBlob(null); 
+    setTimeLeft(15); 
+    setShowAdModal(true); 
+    setLoading(true);
+
     ReactGA.event({ category: "Documento", action: "Clicou Gerar", label: formData.concessionaria });
-    setDownloadBlob(null); setTimeLeft(15); setShowAdModal(true); setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL; 
+      const apiKey = process.env.NEXT_PUBLIC_API_KEY; 
+
+      const payload = prepararPayloadParaAPI();
+
       const response = await fetch(`${apiUrl}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-KEY': apiKey || ''
+         },
+        body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error('Erro ao gerar documento');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.erro || 'Erro ao gerar documento.');
+      }
+
       const blob = await response.blob();
       setDownloadBlob(blob);
+
     } catch (error: any) {
       alert('Erro: ' + error.message);
       setShowAdModal(false);
@@ -115,7 +187,8 @@ export default function Home() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Procuracao_${formData.nome.replace(/ /g, "_")}.docx`;
+    const nomeLimpo = formData.nome.replace(/[^a-zA-Z0-9]/g, "_");
+    a.download = `Procuracao_${nomeLimpo}.docx`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -123,20 +196,15 @@ export default function Home() {
 
   const jsonLd = {
     "@context": "https://schema.org", "@type": "FAQPage",
-    "mainEntity": [
-      { "@type": "Question", "name": "O documento serve para Pessoa Jurídica?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. Nossa ferramenta suporta tanto CPF quanto CNPJ." } },
-      // ... (outros itens mantidos)
-    ]
+    "mainEntity": [{ "@type": "Question", "name": "Gera procuração para CNPJ?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, o sistema identifica automaticamente." } }]
   };
 
   return (
-    // FIX 1: Trocado div por main para "Landmark"
     <main className="page-wrapper">
       <div className="container form">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <header>
-          <h1>Gerador de Procuração para Energia Solar</h1>
-          {/* ... Barra de progresso mantida ... */}
+          <h1>Gerador de Procuração Solar</h1>
           <div className="progress-bar">
             <div className={`step ${step >= 0 ? 'active' : ''}`}>1</div>
             <div className="line"></div>
@@ -148,8 +216,8 @@ export default function Home() {
         </header>
 
         <form onSubmit={handleSubmit}>
-          {/* FIX 2: Adicionado htmlFor nos labels e id nos inputs */}
           
+          {/* PASSO 1: DADOS CLIENTE (PF ou PJ) */}
           {step === 0 && (
             <div className="step-content">
               <div className="form-group">
@@ -158,12 +226,12 @@ export default function Home() {
               </div>
               <div className="half form-group">
                 <label htmlFor="cpf">CPF / CNPJ</label>
-                <input id="cpf" name="cpf" value={formData.cpf} onChange={handleChange} required placeholder="000.000.000-00" maxLength={18} />
+                <input id="cpf" name="cpf" value={formData.cpf} onChange={handleChange} required placeholder="000.000.000-00 ou CNPJ" maxLength={18} />
               </div>
               <div className="row form-group">
                 <div className="half">
                   <label htmlFor="rg">RG / Inscrição Estadual</label>
-                  <input id="rg" name="rg" value={formData.rg} onChange={handleChange} placeholder="Somente números/letras" maxLength={15} />
+                  <input id="rg" name="rg" value={formData.rg} onChange={handleChange} placeholder="Opcional se for PJ" maxLength={15} />
                 </div>
                 <div className="half">
                     <label htmlFor="orgao_emissor">Órgão Emissor</label>
@@ -172,16 +240,17 @@ export default function Home() {
               </div>
               <div className="form-group">
                 <label htmlFor="endereco">Endereço Completo</label>
-                <input id="endereco" name="endereco" value={formData.endereco} onChange={handleChange} />
+                <input id="endereco" name="endereco" value={formData.endereco} onChange={handleChange} required />
               </div>
               <div className="row form-group">
-                  <div className="half"><label htmlFor="bairro">Bairro</label><input id="bairro" name="bairro" value={formData.bairro} onChange={handleChange} /></div>
-                  <div className="half"><label htmlFor="cidade">Cidade</label><input id="cidade" name="cidade" value={formData.cidade} onChange={handleChange} /></div>
+                  <div className="half"><label htmlFor="bairro">Bairro</label><input id="bairro" name="bairro" value={formData.bairro} onChange={handleChange} required /></div>
+                  <div className="half"><label htmlFor="cidade">Cidade</label><input id="cidade" name="cidade" value={formData.cidade} onChange={handleChange} required /></div>
               </div>
-              <div className="form-group"><label htmlFor="cep">CEP</label><input id="cep" name="cep" value={formData.cep} onChange={handleChange} placeholder="00000-000" inputMode="numeric" /></div>
+              <div className="form-group"><label htmlFor="cep">CEP</label><input id="cep" name="cep" value={formData.cep} onChange={handleChange} placeholder="00000-000" inputMode="numeric" required /></div>
             </div>
           )}
 
+          {/* PASSO 2: CONCESSIONÁRIA E REPRESENTANTE */}
           {step === 1 && (
             <div className="step-content">
               <div className="row form-group">
@@ -201,47 +270,62 @@ export default function Home() {
                 </div>
               </div>
               <div className="form-group"><label htmlFor="contacontrato">Conta Contrato</label><input id="contacontrato" name="contacontrato" value={formData.contacontrato} onChange={handleChange} required inputMode="numeric"/></div>
-              <p className="subtitle">Representante Legal (Opcional):</p>
-              <div className="form-group"><label htmlFor="representante">Nome</label><input id="representante" name="representante" value={formData.representante} onChange={handleChange} /></div>
-              <div className="form-group"><label htmlFor="cpf_representante">CPF Representante</label><input id="cpf_representante" name="cpf_representante" value={formData.cpf_representante} onChange={handleChange} placeholder="000.000.000-00"/></div>
+              
+              <div style={{marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef'}}>
+                <p className="subtitle" style={{fontWeight: 'bold', marginBottom: '10px', color: '#444'}}>Representante Legal (Obrigatório para PJ)</p>
+                <div className="form-group"><label htmlFor="representante">Nome do Representante</label><input id="representante" name="representante" value={formData.representante} onChange={handleChange} placeholder="Quem assina pela empresa" style={{color: '#1c1c1c'}}/></div>
+                <div className="form-group"><label htmlFor="cpf_representante">CPF do Representante</label><input id="cpf_representante" name="cpf_representante" value={formData.cpf_representante} onChange={handleChange} placeholder="000.000.000-00" style={{color: '#1c1c1c'}}/></div>
+              </div>
             </div>
           )}
 
+          {/* PASSO 3: CONTRATADO */}
           {step === 2 && (
             <div className="step-content">
-              <div className="form-group"><label htmlFor="nome_CONTRATADO">Nome do Contratado (Outorgado)</label><input id="nome_CONTRATADO" name="nome_CONTRATADO" value={formData.nome_CONTRATADO} onChange={handleChange} /></div>
+              <div className="form-group"><label htmlFor="nome_CONTRATADO">Nome do Contratado (Outorgado)</label><input id="nome_CONTRATADO" name="nome_CONTRATADO" value={formData.nome_CONTRATADO} onChange={handleChange} required /></div>
               <div className="row form-group">
-                  <div className="half"><label htmlFor="rg_CONTRATADO">RG</label><input id="rg_CONTRATADO" name="rg_CONTRATADO" value={formData.rg_CONTRATADO} onChange={handleChange} required placeholder="Somente números/letras" maxLength={15} /></div>
+                  <div className="half"><label htmlFor="rg_CONTRATADO">RG Contratado</label><input id="rg_CONTRATADO" name="rg_CONTRATADO" value={formData.rg_CONTRATADO} onChange={handleChange} required maxLength={15} /></div>
                   <div className="half"><label htmlFor="orgao_emissor_CONTRATADO">Órgão Emissor</label><input id="orgao_emissor_CONTRATADO" name="orgao_emissor_CONTRATADO" value={formData.orgao_emissor_CONTRATADO} onChange={handleChange} style={{textTransform: 'uppercase'}} maxLength={10} /></div>
               </div>
-              <div className="form-group"><label htmlFor="cpf_CONTRATADO">CPF do Contratado</label><input id="cpf_CONTRATADO" name="cpf_CONTRATADO" value={formData.cpf_CONTRATADO} onChange={handleChange} required placeholder="000.000.000-00" maxLength={14} /></div>
-              <div className="form-group"><label htmlFor="endereco_CONTRATADO">Endereço do Contratado</label><input id="endereco_CONTRATADO" name="endereco_CONTRATADO" value={formData.endereco_CONTRATADO} onChange={handleChange} required/></div>
+              <div className="form-group"><label htmlFor="cpf_CONTRATADO">CPF Contratado</label><input id="cpf_CONTRATADO" name="cpf_CONTRATADO" value={formData.cpf_CONTRATADO} onChange={handleChange} required maxLength={14} /></div>
+              <div className="form-group"><label htmlFor="endereco_CONTRATADO">Endereço Contratado</label><input id="endereco_CONTRATADO" name="endereco_CONTRATADO" value={formData.endereco_CONTRATADO} onChange={handleChange} required/></div>
             </div>
           )}
 
-          {/* ... Botões e rodapé iguais ... */}
           <div className="button-group">
             {step > 0 && <button type="button" onClick={prevStep} className="btn-secondary">Voltar</button>}
             {step < 2 ? (
               <button type="button" onClick={nextStep} className="btn-primary">Próximo</button>
             ) : (
               <button type="submit" disabled={loading} className="btn-success">
-                {loading ? 'Processando...' : 'Gerar Documento'}
+                {loading ? 'Gerando...' : 'Gerar Documento'}
               </button>
             )}
           </div>
         </form>
       </div>
+      
       <ConteudoSite />
       
       {showAdModal && (
           <div className="modal-overlay">
               <div className="modal-content">
-                  <h3>Gerando seu Documento...</h3>
-                  <p>Aguarde <strong>{timeLeft}</strong> segundos para o download iniciar.</p>
-                  <div className="ad-container"><AdSenseBanner /></div>
-                  {readyToDownload && <p style={{color: '#10b981', marginTop: '10px'}}>Download iniciado!</p>}
-                  {readyToDownload && <button onClick={() => setShowAdModal(false)} className="btn-secondary" style={{marginTop: '15px', color: '#10b981'}}>Fechar</button>}
+                  <h3>Preparando Documento...</h3>
+                  
+                  {timeLeft > 0 ? (
+                    <p>Seu download iniciará em <strong>{timeLeft}</strong> segundos.</p>
+                  ) : (
+                    !readyToDownload ? <p>Finalizando arquivo...</p> : null
+                  )}
+
+                  <div className="ad-container" style={{margin: '15px 0'}}><AdSenseBanner /></div>
+                  
+                  {readyToDownload && (
+                    <>
+                      <p style={{color: '#10b981', fontWeight: 'bold', fontSize: '1.2em'}}>Download Iniciado!</p>
+                      <button onClick={() => setShowAdModal(false)} className="btn-secondary" style={{marginTop: '10px', color: '#1c1c1c'}}>FECHAR</button>
+                    </>
+                  )}
               </div>
           </div>
       )}
