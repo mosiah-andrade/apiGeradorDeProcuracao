@@ -133,23 +133,37 @@ try {
         $prefixo = pathinfo($nomeModeloSeguro, PATHINFO_FILENAME);
         $nomeUsuario = preg_replace('/[^A-Za-z0-9]/', '_', $dados['nome'] ?? 'Documento');
         $nomeFinal = $prefixo . "_" . $nomeUsuario . ".docx";
+// 1. Limpa qualquer lixo que o PHP/Servidor tenha gerado antes (espaços, warnings)
+        if (ob_get_level()) ob_end_clean(); 
 
+        // 2. Desativa compressão do servidor para não bater de frente com o Content-Length
+        if(ini_get('zlib.output_compression')) {
+             ini_set('zlib.output_compression', 'Off');
+        }
+
+        // 3. Cabeçalhos forçados
         header('Content-Description: File Transfer');
         header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         header('Content-Disposition: attachment; filename="' . $nomeFinal . '"');
         header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
         header('Content-Length: ' . filesize($arquivoTemp));
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         
+        // 4. Envia o arquivo limpo
         readfile($arquivoTemp);
+        
+        // 5. Remove o temporário e MATA o script imediatamente
         unlink($arquivoTemp);
-        exit;
+        exit; // Impede que qualquer byte extra seja enviado
 
     } else {
         throw new Exception("Não foi possível abrir o arquivo DOCX (Verifique se a extensão ZIP está ativa no PHP).");
     }
-
+    
 } catch (Exception $e) {
+    if (ob_get_level()) ob_end_clean(); // Limpa buffer de erro também
     http_response_code(500);
     echo json_encode(["erro" => $e->getMessage()]);
     if (isset($arquivoTemp) && file_exists($arquivoTemp)) unlink($arquivoTemp);
