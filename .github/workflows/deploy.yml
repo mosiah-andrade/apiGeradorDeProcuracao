@@ -41,8 +41,8 @@ jobs:
         working-directory: ./front-contratos-next
         env:
           # Isso pega a variável que você criou nas configurações do GitHub
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_API_KEY: ${{ vars.NEXT_PUBLIC_API_KEY }}
+         NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+         NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
         run: npm run build # Isso vai criar a pasta 'out' automaticamente aqui
 
       - name: 🚀 Enviar Front-end para Hostinger
