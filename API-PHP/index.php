@@ -1,187 +1,153 @@
 <?php
-// Tenta carregar a configuração externa (segura)
+// 1. Configurações Iniciais e CORS
+// ==========================================================
+// Permite acesso de qualquer origem (ajuste em produção se necessário)
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Max-Age: 86400');    // Cache por 1 dia
+}
+
+// Access-Control headers para preflight requests
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");         
+
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+        header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+
+    exit(0);
+}
+// ==========================================================
+
+// Tenta carregar a configuração
 if (file_exists(__DIR__ . '/config.php')) {
     require_once __DIR__ . '/config.php';
 }
 
-// Fallback (caso esqueça de subir o config, usa uma padrão ou erro)
 if (!defined('API_SECRET_KEY')) {
-    // Se estiver rodando localhost pode deixar uma fixa, mas em produção evite
     define('API_SECRET_KEY', 'senha_padrao_insegura'); 
 }
 
-// --- CONFIGURAÇÃO DE PERFORMANCE E CORS ---
-if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
-    ini_set('zlib.output_compression', 'On');
-}
-
-// CORS: Permite que seu frontend acesse (ajuste o domínio em produção)
-$origem = $_SERVER['HTTP_ORIGIN'] ?? '';
-
-// Lista de domínios permitidos
-$origensPermitidas = [
-    'https://asaweb.tech',
-    'http://localhost:3000', // Adicione esta linha para testar localmente
-    'http://localhost:3001'
-];
-
-if (in_array($origem, $origensPermitidas)) {
-    header("Access-Control-Allow-Origin: $origem");
-} else {
-    // Fallback ou bloqueia
-    header("Access-Control-Allow-Origin: https://asaweb.tech");
-}
-header("Access-Control-Allow-Headers: Content-Type, X-API-KEY"); // Importante: Aceitar o header da chave
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Content-Type: application/json; charset=UTF-8");
-
-// Encerra pre-flight requests (OPTIONS) sem verificar senha
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-// --- 2. VERIFICAÇÃO DE SEGURANÇA (LISTA DE CLIENTES) ---
+// 2. Autenticação (Simplificada)
+// ==========================================================
 function verificarAutenticacao() {
-    // Carrega a configuração se ainda não estiver carregada
-    if (file_exists(__DIR__ . '/config.php')) {
-        require_once __DIR__ . '/config.php';
-    }
-    
-    // Se não houver lista de clientes definida, bloqueia tudo por segurança
-    if (!defined('API_CLIENTS')) {
-        http_response_code(500);
-        echo json_encode(["erro" => "Erro de configuração no servidor (Lista de API Keys ausente)."]);
-        exit();
-    }
+    if (!defined('API_CLIENTS')) return true; // Se não tem clientes definidos, libera (cuidado!)
 
     $headers = getallheaders();
-    $chaveEnviada = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? $_SERVER['HTTP_X_API_KEY'] ?? null;
+    // Normaliza para lowercase para evitar problemas de case sensitive
+    $headers = array_change_key_case($headers, CASE_LOWER);
+    
+    $chaveEnviada = $headers['x-api-key'] ?? $_SERVER['HTTP_X_API_KEY'] ?? null;
 
-    if (!$chaveEnviada) {
-        http_response_code(401);
-        echo json_encode(["erro" => "Chave de API não fornecida."]);
-        exit();
+    if (!$chaveEnviada || !in_array($chaveEnviada, API_CLIENTS)) {
+        http_response_code(403);
+        echo json_encode(["erro" => "Acesso negado. API Key inválida."]);
+        exit;
     }
-
-    // --- A MÁGICA ACONTECE AQUI ---
-    // Verifica se a chave enviada existe nos valores do nosso array de clientes
-    $clienteEncontrado = array_search($chaveEnviada, API_CLIENTS);
-
-    if ($clienteEncontrado === false) {
-        // Chave não encontrada na lista
-        http_response_code(403); // Proibido
-        echo json_encode(["erro" => "Acesso negado. Chave de API inválida."]);
-        exit();
-    }
-
-    // (Opcional) Se quiser usar o nome do cliente depois, pode retornar ele
-    return $clienteEncontrado; 
 }
+// ==========================================================
 
-// Chama a segurança e guarda o nome do cliente (se precisar usar no log ou no documento)
-$nomeDoClienteLogado = verificarAutenticacao();
-
+verificarAutenticacao();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(["erro" => "Método não permitido."]);
-    exit();
+    exit;
 }
 
-// --- LÓGICA DO GERADOR ---
 try {
     $inputJSON = file_get_contents('php://input');
     $dados = json_decode($inputJSON, true);
 
     if (!$dados) throw new Exception("JSON inválido.");
 
-    // Validação do modelo
-    if (!isset($dados['arquivo_modelo']) || empty($dados['arquivo_modelo'])) {
+    // Validação básica
+    if (empty($dados['arquivo_modelo'])) {
         throw new Exception("O campo 'arquivo_modelo' é obrigatório.");
     }
 
-    // Segurança do nome do arquivo (evita invasão de pastas)
-    $nomeModeloSeguro = basename($dados['arquivo_modelo']); 
-    if (pathinfo($nomeModeloSeguro, PATHINFO_EXTENSION) !== 'docx') {
-        $nomeModeloSeguro .= '.docx';
+    // Segurança no nome do arquivo
+    $nomeModelo = basename($dados['arquivo_modelo']);
+    if (pathinfo($nomeModelo, PATHINFO_EXTENSION) !== 'docx') {
+        $nomeModelo .= '.docx';
     }
 
-    $caminhoModelo = __DIR__ . '/' . $nomeModeloSeguro;
-
+    $caminhoModelo = __DIR__ . '/' . $nomeModelo;
     if (!file_exists($caminhoModelo)) {
-        throw new Exception("Modelo '$nomeModeloSeguro' não encontrado no servidor.");
+        throw new Exception("Modelo '$nomeModelo' não encontrado.");
     }
 
-    // --- PROCESSAMENTO ---
-    $arquivoTemp = tempnam(sys_get_temp_dir(), 'doc_'); 
-    
+    // --- PROCESSAMENTO DO WORD ---
+    $arquivoTemp = tempnam(sys_get_temp_dir(), 'doc_');
     if (!copy($caminhoModelo, $arquivoTemp)) {
-        throw new Exception("Erro ao criar buffer temporário.");
+        throw new Exception("Erro ao copiar modelo para área temporária.");
     }
 
     $zip = new ZipArchive;
     if ($zip->open($arquivoTemp) === TRUE) {
-        
         $xmlContent = $zip->getFromName('word/document.xml');
         if ($xmlContent) {
             $xmlContent = substituirPlaceholders($xmlContent, $dados);
             $zip->addFromString('word/document.xml', $xmlContent);
         }
         $zip->close();
+        
+        // ==================================================================
+        // A CORREÇÃO MÁGICA ESTÁ AQUI EMBAIXO
+        // ==================================================================
 
-        // Download
-        $prefixo = pathinfo($nomeModeloSeguro, PATHINFO_FILENAME);
-        $nomeUsuario = preg_replace('/[^A-Za-z0-9]/', '_', $dados['nome'] ?? 'Documento');
-        $nomeFinal = $prefixo . "_" . $nomeUsuario . ".docx";
-// 1. Limpa qualquer lixo que o PHP/Servidor tenha gerado antes (espaços, warnings)
-        if (ob_get_level()) ob_end_clean(); 
+        // 1. Limpa TODOS os buffers de saída anteriores (remove espaços em branco, warnings, echos perdidos)
+        while (ob_get_level()) ob_end_clean(); 
 
-        // 2. Desativa compressão do servidor para não bater de frente com o Content-Length
+        // 2. Desativa compressão do PHP para este request (evita corromper binário)
         if(ini_get('zlib.output_compression')) {
              ini_set('zlib.output_compression', 'Off');
         }
 
-        // 3. Cabeçalhos forçados
+        // 3. Define nome do arquivo para download
+        $nomeCliente = preg_replace('/[^A-Za-z0-9]/', '_', $dados['NOME'] ?? 'Contrato');
+        $nomeFinal = "Procuracao_" . $nomeCliente . ".docx";
+        $tamanhoArquivo = filesize($arquivoTemp);
+
+        // 4. Headers Corretos e Forçados
         header('Content-Description: File Transfer');
         header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         header('Content-Disposition: attachment; filename="' . $nomeFinal . '"');
         header('Content-Transfer-Encoding: binary');
         header('Expires: 0');
-        header('Cache-Control: must-revalidate');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
         header('Pragma: public');
-        header('Content-Length: ' . filesize($arquivoTemp));
-        
-        // 4. Envia o arquivo limpo
+        header('Content-Length: ' . $tamanhoArquivo);
+
+        // 5. Envia o arquivo limpo
         readfile($arquivoTemp);
         
-        // 5. Remove o temporário e MATA o script imediatamente
+        // 6. Limpeza final
         unlink($arquivoTemp);
-        exit; // Impede que qualquer byte extra seja enviado
+        exit; // MATA O SCRIPT AQUI. Nada mais é executado.
 
     } else {
-        throw new Exception("Não foi possível abrir o arquivo DOCX (Verifique se a extensão ZIP está ativa no PHP).");
+        throw new Exception("Não foi possível abrir o arquivo DOCX.");
     }
-    
+
 } catch (Exception $e) {
-    if (ob_get_level()) ob_end_clean(); // Limpa buffer de erro também
     http_response_code(500);
     echo json_encode(["erro" => $e->getMessage()]);
     if (isset($arquivoTemp) && file_exists($arquivoTemp)) unlink($arquivoTemp);
 }
 
+// Função auxiliar recursiva
 function substituirPlaceholders($xml, $dados, $prefixo = '') {
     foreach ($dados as $chave => $valor) {
         if ($chave === 'arquivo_modelo') continue;
-
         if (is_array($valor)) {
             $xml = substituirPlaceholders($xml, $valor, $prefixo . $chave . ".");
         } else {
             $p1 = "{{" . $prefixo . $chave . "}}";
-            $p2 = "{{ " . $prefixo . $chave . " }}";
             $valLimpo = htmlspecialchars($valor ?? '', ENT_XML1, 'UTF-8');
-            $xml = str_replace([$p1, $p2], $valLimpo, $xml);
+            $xml = str_replace($p1, $valLimpo, $xml);
         }
     }
     return $xml;
 }
-?>
