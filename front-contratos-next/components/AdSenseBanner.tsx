@@ -51,11 +51,11 @@ const AdSenseBanner = () => {
            data-ad-test="on"
           >
            </ins> */}
-      <img src={'/imagem-social-share.png'} alt="Anúncio" style={{ 
+      {/* <img src={'/imagem-social-share.png'} alt="Anúncio" style={{ 
           maxWidth: '100%', 
           height: 'auto', 
           display: 'block' 
-        }} />
+        }} /> */}
     </div>
   );
 };
