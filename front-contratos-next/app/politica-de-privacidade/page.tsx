@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function PoliticaPrivacidade() {
   return (
-    <div className="container" style={{padding: '40px 20px', maxWidth: '900px', margin: '0 auto', fontFamily: 'sans-serif', lineHeight: '1.6', color: '#333'}}>
-      <h1 style={{fontSize: '2.5rem', marginBottom: '20px', borderBottom: '2px solid #eee', paddingBottom: '10px'}}>Política de Privacidade</h1>
+    <div className="container" style={{padding: '40px 20px', maxWidth: '900px', margin: '0 auto', fontFamily: 'sans-serif', lineHeight: '1.6', color: '#333', backgroundColor: '#edecec'}}>
+      <h1 style={{fontSize: '2.5rem', marginBottom: '20px', borderBottom: '2px solid #1a1a1a', paddingBottom: '10px', color: '#1a1a1a'}}>Política de Privacidade</h1>
       <p style={{fontStyle: 'italic', color: '#666', marginBottom: '30px'}}>Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
 
       <section style={{marginBottom: '30px'}}>

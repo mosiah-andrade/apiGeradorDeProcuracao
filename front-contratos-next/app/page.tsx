@@ -50,7 +50,7 @@ export default function Home() {
     nome: '', cpf: '', rg: '', orgao_emissor: '',
     endereco: '', cidade: '', classificacao: 'Monofásico',
     contacontrato: '', bairro: '', cep: '',
-    concessionaria: 'CELPE', representante: '', cpf_representante: '',
+    concessionaria: '', representante: '', cpf_representante: '',
     nome_CONTRATADO: '', rg_CONTRATADO: '', orgao_emissor_CONTRATADO: '',
     cpf_CONTRATADO: '', endereco_CONTRATADO: ''
   });
@@ -99,7 +99,8 @@ export default function Home() {
   const prepararPayloadParaAPI = () => {
     const documentoLimpo = formData.cpf.replace(/\D/g, '');
     const isPJ = documentoLimpo.length > 11;
-    const arquivoModelo = isPJ ? 'modelo_pj-celpe.docx' : 'modelo_pf-celpe.docx';
+    const concessionaria = formData.concessionaria.toLowerCase();
+    const arquivoModelo = isPJ ? `modelo_pj-${concessionaria}.docx` : `modelo_pf-${concessionaria}.docx`;
 
     const dataHoje = new Date();
     const meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -122,6 +123,7 @@ export default function Home() {
       CPF_DO_REPRESENTANTE: formData.cpf_representante,
       
       // --- DADOS TÉCNICOS ---
+      CONCESSIONARIA: formData.concessionaria,
       CONTACONTRATO: formData.contacontrato,
       CLASSIFICACAO: formData.classificacao,
       
@@ -142,6 +144,13 @@ export default function Home() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (step < 2) { nextStep(); return; }
+
+    if (!formData.concessionaria) {
+      alert("Por favor, selecione uma concessionária.");
+      // Opcional: Voltar para a etapa da concessionária se necessário
+      if (step !== 1) setStep(1); 
+      return;
+    }
     
     // Resetando estados
     setReadyToDownload(false);
@@ -257,7 +266,9 @@ export default function Home() {
                 <div className="half">
                   <label htmlFor="concessionaria">Concessionária</label>
                   <select id="concessionaria" name="concessionaria" value={formData.concessionaria} onChange={handleChange}>
+                    <option value="" >Selecione...</option>
                     <option value="CELPE">CELPE (Neoenergia)</option>
+                    <option value="COELBA">COELBA (Neoenergia)</option>
                   </select>
                 </div>
                 <div className="half">
