@@ -44,7 +44,7 @@ jobs:
            NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
         run: npm run build 
 
-        
+
       # ---------------------------------------------------------
       # 3. DEPLOY DO FRONT-END
       # ---------------------------------------------------------
@@ -58,7 +58,7 @@ jobs:
           
           # Atenção: O localDir deve ser a pasta interna do 'out'
           localDir: './front-contratos-next/out'
-          remoteDir: '/public_html'
+          remoteDir: './'
           
           # IMPORTANTE: Como não usamos 'clean: true', ele vai substituir 
           # os arquivos do site, mas NÃO vai apagar a pasta 'api' que subimos antes.
