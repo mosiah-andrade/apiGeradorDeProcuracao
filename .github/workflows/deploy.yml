@@ -70,3 +70,20 @@ jobs:
           
           # Remove as pastas "front-contratos-next" e "out" do caminho, jogando apenas os arquivos na raiz
           strip_components: 2
+          # ... (seus passos de upload anteriores) ...
+
+      # ADICIONE ISSO NO FINAL DO ARQUIVO .YML PARA DEBUGAR
+      - name: 🕵️ Verificar onde os arquivos estão
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 65002
+          script: |
+            echo "---- LISTANDO RAIZ ----"
+            ls -la
+            echo "---- LISTANDO PUBLIC_HTML ----"
+            ls -la public_html
+            echo "---- PROCURANDO ARQUIVOS PERDIDOS ----"
+            find . -maxdepth 3 -name "index.html"
