@@ -1,4 +1,4 @@
-name: 🕵️ Detetive de Caminhos
+name: Deploy Asaweb.tech (Hostinger)
 
 on:
   push:
@@ -6,10 +6,80 @@ on:
       - main
 
 jobs:
-  debug-server:
+  web-deploy:
+    name: Deploy API e Front
     runs-on: ubuntu-latest
     steps:
-      - name: 🔍 Descobrir estrutura de pastas
+      - name: 🚚 Obter código
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------
+      # 1. DEPLOY DA API PHP
+      # ---------------------------------------------------------
+      - name: 📂 Upload API PHP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 65002
+          timeout: 120s
+          
+          # Pega todo o conteúdo da pasta API-PHP
+          source: "API-PHP/*"
+          
+          # Manda para a pasta específica do domínio
+          target: "domains/asaweb.tech/public_html/api"
+          
+          # Remove a pasta "API-PHP" do caminho para jogar apenas os arquivos
+          strip_components: 1
+
+      # ---------------------------------------------------------
+      # 2. BUILD DO FRONT-END (Next.js)
+      # ---------------------------------------------------------
+      - name: 📦 Instalar Dependências
+        working-directory: ./front-contratos-next
+        run: npm install --legacy-peer-deps
+
+      - name: 🏗️ Build do Next.js
+        working-directory: ./front-contratos-next
+        env:
+           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+           NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
+        run: npm run build 
+
+      # ---------------------------------------------------------
+      # 3. PREPARAÇÃO DOS ARQUIVOS
+      # ---------------------------------------------------------
+      - name: 🧹 Preparar pasta para envio
+        run: |
+          # Movemos o 'out' para 'site_deploy' para facilitar o envio
+          mv front-contratos-next/out site_deploy
+
+      # ---------------------------------------------------------
+      # 4. DEPLOY DO FRONT-END
+      # ---------------------------------------------------------
+      - name: 🚀 Upload Frontend
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 65002
+          timeout: 120s
+          
+          # Pega da pasta temporária
+          source: "site_deploy/*"
+          
+          # Manda para a raiz do domínio asaweb.tech
+          target: "domains/asaweb.tech/public_html"
+          
+          strip_components: 1
+
+      # ---------------------------------------------------------
+      # 5. CONFIRMAÇÃO FINAL
+      # ---------------------------------------------------------
+      - name: 🕵️ Verificar se chegou no lugar certo
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.FTP_SERVER }}
@@ -17,19 +87,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 65002
           script: |
-            echo "==== ONDE ESTOU? ===="
-            pwd
-            
-            echo "==== O QUE TEM NA RAIZ? ===="
-            ls -F
-            
-            echo "==== TEM PASTA 'DOMAINS'? ===="
-            if [ -d "domains" ]; then
-                echo "SIM! Listando conteúdo de domains:"
-                ls -F domains/
-            else
-                echo "NÃO. Estrutura antiga."
-            fi
-            
-            echo "==== O QUE TEM DENTRO DE public_html ATUAL? ===="
-            ls -F public_html/
+            echo "--- Verificando pasta do Asaweb ---"
+            ls -la domains/asaweb.tech/public_html
