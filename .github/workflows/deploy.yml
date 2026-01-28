@@ -1,9 +1,9 @@
-name: Deploy para Hostinger
+name: Deploy para Hostinger (Final)
 
 on:
   push:
     branches:
-      - main  # Ou 'master', verifique o nome da sua branch principal
+      - main
 
 jobs:
   web-deploy:
@@ -15,23 +15,23 @@ jobs:
 
       # ---------------------------------------------------------
       # 1. DEPLOY DA API PHP
-      # Envia a pasta 'API-PHP' para 'public_html/api'
       # ---------------------------------------------------------
-      - name: 📂 Sincronizar API PHP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: 📂 Upload API PHP (SFTP)
+        uses: wangyucode/sftp-upload-action@v2.0.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./API-PHP/        # Pasta local no repositório
-          server-dir: ./api/  # Onde vai ficar na Hostinger
-          exclude: |
-            **/.git*
-            **/.git*/**
+          port: ${{ secrets.FTP_PORT }} # Deve ser 65002
+          
+          localDir: './API-PHP'
+          remoteDir: '/public_html/api'
+          
+          # dryRun: false # Descomente se quiser apenas testar sem enviar
+          # verbose: true # Ajuda a ver erros no log se falhar
 
       # ---------------------------------------------------------
-      # 2. BUILD E DEPLOY DO FRONT-END (Next.js)
-      # Gera a pasta 'out' e envia para a raiz 'public_html'
+      # 2. BUILD DO FRONT-END (Next.js)
       # ---------------------------------------------------------
       - name: 📦 Instalar Dependências (Next.js)
         working-directory: ./front-contratos-next
@@ -40,23 +40,24 @@ jobs:
       - name: 🏗️ Construir Site (Build)
         working-directory: ./front-contratos-next
         env:
-          # Isso pega a variável que você criou nas configurações do GitHub
-         NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-         NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
-        run: npm run build # Isso vai criar a pasta 'out' automaticamente aqui
+           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+           NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
+        run: npm run build 
 
-      - name: 🚀 Enviar Front-end para Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      # ---------------------------------------------------------
+      # 3. DEPLOY DO FRONT-END
+      # ---------------------------------------------------------
+      - name: 🚀 Upload Frontend (SFTP)
+        uses: wangyucode/sftp-upload-action@v2.0.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # AQUI ESTÁ O SEGREDO: Pegamos a pasta criada pelo build
-          local-dir: ./front-contratos-next/out/
-          server-dir: ./      # Vai para a raiz do site
-          exclude: |
-            **/.git*
-            **/node_modules/**
-            api/**
-            api/**/*
-            **/.git*/**
+          port: ${{ secrets.FTP_PORT }} # 65002
+          
+          # Atenção: O localDir deve ser a pasta interna do 'out'
+          localDir: './front-contratos-next/out'
+          remoteDir: '/public_html'
+          
+          # IMPORTANTE: Como não usamos 'clean: true', ele vai substituir 
+          # os arquivos do site, mas NÃO vai apagar a pasta 'api' que subimos antes.
