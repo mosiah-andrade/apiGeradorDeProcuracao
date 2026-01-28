@@ -1,4 +1,4 @@
-name: Deploy Hostinger (Final Sem Erro)
+name: Deploy Hostinger (Appleboy Robusto)
 
 on:
   push:
@@ -17,15 +17,20 @@ jobs:
       # 1. DEPLOY DA API PHP
       # ---------------------------------------------------------
       - name: 📂 Upload API PHP
-        uses: wangyucode/sftp-upload-action@v2.0.4
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: 65002
+          timeout: 120s
           
-          localDir: './API-PHP'
-          remoteDir: 'public_html/api' # Sem barra no início
+          # Envia o conteúdo da pasta API-PHP
+          source: "API-PHP/*"
+          target: "public_html/api"
+          
+          # Remove a pasta "API-PHP" do caminho para não criar subpasta extra
+          strip_components: 1
 
       # ---------------------------------------------------------
       # 2. BUILD DO FRONT-END (Next.js)
@@ -42,19 +47,45 @@ jobs:
         run: npm run build 
 
       # ---------------------------------------------------------
-      # 3. DEPLOY DO FRONT-END
+      # 3. PREPARAÇÃO DOS ARQUIVOS (O Segredo)
+      # ---------------------------------------------------------
+      - name: 🧹 Preparar pasta para envio
+        run: |
+          # Movemos o conteúdo de 'out' para uma pasta limpa na raiz
+          # Isso facilita para o SCP encontrar o caminho
+          mv front-contratos-next/out site_deploy
+
+      # ---------------------------------------------------------
+      # 4. DEPLOY DO FRONT-END
       # ---------------------------------------------------------
       - name: 🚀 Upload Frontend
-        uses: wangyucode/sftp-upload-action@v2.0.4
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: 65002
+          timeout: 120s
           
-          # Pega a pasta 'out' gerada pelo build
-          localDir: './front-contratos-next/out'
+          # Pega da pasta que preparamos acima
+          source: "site_deploy/*"
           
-          # Manda para a raiz pública (Sem barra no início)
-          remoteDir: 'public_html'
+          # Manda para a raiz pública
+          target: "public_html"
           
+          # Remove a pasta 'site_deploy' e joga só os arquivos
+          strip_components: 1
+
+      # ---------------------------------------------------------
+      # 5. TIRA-TEIMA (Verificar se chegou)
+      # ---------------------------------------------------------
+      - name: 🕵️ Verificar arquivos no servidor
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 65002
+          script: |
+            echo "--- CONTEÚDO DA PASTA PUBLIC_HTML ---"
+            ls -la public_html
