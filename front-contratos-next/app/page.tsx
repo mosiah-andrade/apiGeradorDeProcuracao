@@ -269,6 +269,7 @@ export default function Home() {
                     <option value="" >Selecione...</option>
                     <option value="CELPE">CELPE (Neoenergia)</option>
                     <option value="COELBA">COELBA (Neoenergia)</option>
+                    <option value="COSERN">COSERN (Neoenergia)</option>
                   </select>
                 </div>
                 <div className="half">

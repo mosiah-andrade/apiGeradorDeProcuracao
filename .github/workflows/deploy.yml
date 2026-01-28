@@ -1,4 +1,4 @@
-name: Deploy para Hostinger (Final)
+name: Deploy Hostinger (Appleboy SCP)
 
 on:
   push:
@@ -10,32 +10,40 @@ jobs:
     name: Deploy API e Front
     runs-on: ubuntu-latest
     steps:
-      - name: 🚚 Obter código mais recente
+      - name: 🚚 Obter código
         uses: actions/checkout@v4
 
       # ---------------------------------------------------------
       # 1. DEPLOY DA API PHP
       # ---------------------------------------------------------
-      - name: 📂 Upload API PHP (SFTP)
-        uses: wangyucode/sftp-upload-action@v2.0.4
+      - name: 📂 Upload API PHP
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }} # 65002
+          port: 65002
           
-          localDir: './API-PHP'
-          # CORREÇÃO: Removida a barra '/' do início
-          remoteDir: 'public_html/api' 
+          # Aumentamos o tempo limite para evitar o erro de Handshake
+          timeout: 120s 
+          
+          # Pega a pasta API-PHP
+          source: "API-PHP/*"
+          
+          # Manda para a pasta api (SEM a barra / no início)
+          target: "public_html/api"
+          
+          # Remove a primeira pasta (API-PHP) para jogar apenas os arquivos dentro de public_html/api
+          strip_components: 1
 
       # ---------------------------------------------------------
       # 2. BUILD DO FRONT-END (Next.js)
       # ---------------------------------------------------------
-      - name: 📦 Instalar Dependências (Next.js)
+      - name: 📦 Instalar Dependências
         working-directory: ./front-contratos-next
         run: npm install --legacy-peer-deps
 
-      - name: 🏗️ Construir Site (Build)
+      - name: 🏗️ Build do Next.js
         working-directory: ./front-contratos-next
         env:
            NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -45,14 +53,20 @@ jobs:
       # ---------------------------------------------------------
       # 3. DEPLOY DO FRONT-END
       # ---------------------------------------------------------
-      - name: 🚀 Upload Frontend (SFTP)
-        uses: wangyucode/sftp-upload-action@v2.0.4
+      - name: 🚀 Upload Frontend
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }} # 65002
+          port: 65002
+          timeout: 120s
           
-          localDir: './front-contratos-next/out'
-          # CORREÇÃO: Removida a barra '/' do início
-          remoteDir: 'public_html'
+          # Pega o conteúdo gerado
+          source: "front-contratos-next/out/*"
+          
+          # Manda para a raiz do site (SEM a barra / no início)
+          target: "public_html"
+          
+          # Remove as pastas "front-contratos-next" e "out" do caminho, jogando apenas os arquivos na raiz
+          strip_components: 2
