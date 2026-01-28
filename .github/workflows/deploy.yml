@@ -22,13 +22,11 @@ jobs:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }} # Deve ser 65002
+          port: ${{ secrets.FTP_PORT }} # 65002
           
           localDir: './API-PHP'
-          remoteDir: '/public_html/api'
-          
-          # dryRun: false # Descomente se quiser apenas testar sem enviar
-          # verbose: true # Ajuda a ver erros no log se falhar
+          # CORREÇÃO: Removida a barra '/' do início
+          remoteDir: 'public_html/api' 
 
       # ---------------------------------------------------------
       # 2. BUILD DO FRONT-END (Next.js)
@@ -44,7 +42,6 @@ jobs:
            NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
         run: npm run build 
 
-
       # ---------------------------------------------------------
       # 3. DEPLOY DO FRONT-END
       # ---------------------------------------------------------
@@ -56,9 +53,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT }} # 65002
           
-          # Atenção: O localDir deve ser a pasta interna do 'out'
           localDir: './front-contratos-next/out'
-          remoteDir: './'
-          
-          # IMPORTANTE: Como não usamos 'clean: true', ele vai substituir 
-          # os arquivos do site, mas NÃO vai apagar a pasta 'api' que subimos antes.
+          # CORREÇÃO: Removida a barra '/' do início
+          remoteDir: 'public_html'
