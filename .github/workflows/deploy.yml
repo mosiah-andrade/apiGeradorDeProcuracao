@@ -1,4 +1,4 @@
-name: Deploy Hostinger (Appleboy Robusto)
+name: 🕵️ Detetive de Caminhos
 
 on:
   push:
@@ -6,80 +6,10 @@ on:
       - main
 
 jobs:
-  web-deploy:
-    name: Deploy API e Front
+  debug-server:
     runs-on: ubuntu-latest
     steps:
-      - name: 🚚 Obter código
-        uses: actions/checkout@v4
-
-      # ---------------------------------------------------------
-      # 1. DEPLOY DA API PHP
-      # ---------------------------------------------------------
-      - name: 📂 Upload API PHP
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 65002
-          timeout: 120s
-          
-          # Envia o conteúdo da pasta API-PHP
-          source: "API-PHP/*"
-          target: "public_html/api"
-          
-          # Remove a pasta "API-PHP" do caminho para não criar subpasta extra
-          strip_components: 1
-
-      # ---------------------------------------------------------
-      # 2. BUILD DO FRONT-END (Next.js)
-      # ---------------------------------------------------------
-      - name: 📦 Instalar Dependências
-        working-directory: ./front-contratos-next
-        run: npm install --legacy-peer-deps
-
-      - name: 🏗️ Build do Next.js
-        working-directory: ./front-contratos-next
-        env:
-           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-           NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
-        run: npm run build 
-
-      # ---------------------------------------------------------
-      # 3. PREPARAÇÃO DOS ARQUIVOS (O Segredo)
-      # ---------------------------------------------------------
-      - name: 🧹 Preparar pasta para envio
-        run: |
-          # Movemos o conteúdo de 'out' para uma pasta limpa na raiz
-          # Isso facilita para o SCP encontrar o caminho
-          mv front-contratos-next/out site_deploy
-
-      # ---------------------------------------------------------
-      # 4. DEPLOY DO FRONT-END
-      # ---------------------------------------------------------
-      - name: 🚀 Upload Frontend
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 65002
-          timeout: 120s
-          
-          # Pega da pasta que preparamos acima
-          source: "site_deploy/*"
-          
-          # Manda para a raiz pública
-          target: "public_html"
-          
-          # Remove a pasta 'site_deploy' e joga só os arquivos
-          strip_components: 1
-
-      # ---------------------------------------------------------
-      # 5. TIRA-TEIMA (Verificar se chegou)
-      # ---------------------------------------------------------
-      - name: 🕵️ Verificar arquivos no servidor
+      - name: 🔍 Descobrir estrutura de pastas
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.FTP_SERVER }}
@@ -87,5 +17,19 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 65002
           script: |
-            echo "--- CONTEÚDO DA PASTA PUBLIC_HTML ---"
-            ls -la public_html
+            echo "==== ONDE ESTOU? ===="
+            pwd
+            
+            echo "==== O QUE TEM NA RAIZ? ===="
+            ls -F
+            
+            echo "==== TEM PASTA 'DOMAINS'? ===="
+            if [ -d "domains" ]; then
+                echo "SIM! Listando conteúdo de domains:"
+                ls -F domains/
+            else
+                echo "NÃO. Estrutura antiga."
+            fi
+            
+            echo "==== O QUE TEM DENTRO DE public_html ATUAL? ===="
+            ls -F public_html/
