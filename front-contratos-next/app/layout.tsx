@@ -39,13 +39,16 @@ export const metadata: Metadata = {
     siteName: "Gerador Solar",
     images: [
       {
-        url: "/imagem-social-share.png",
+        url: "https://asaweb.tech/imagem-social-share.png",
         width: 1200,
         height: 630,
       },
     ],
     locale: "pt_BR",
     type: "website",
+  },
+  icons: {
+    icon: 'https://asaweb.tech/favicon.ico', 
   },
   robots: {
     index: true,

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import ShareButtons from '@/components/ShareButtons';
 import Link from 'next/link';
-import { Metadata } from 'next'; // 1. ADICIONEI ESTA IMPORTAÇÃO
+import { Metadata } from 'next';
 import GroupAd from '@/components/GroupAd';
 
 // GERAÇÃO ESTÁTICA DAS PÁGINAS
@@ -57,7 +57,7 @@ const ptComponents = {
 };
 // -------------------------------------------------------------
 
-// 2. FUNÇÃO NOVA: ISSO É O QUE MUDA O TÍTULO DA ABA
+// 2. FUNÇÃO CORRIGIDA: AGORA DEFINIMOS A VARIÁVEL ANTES DE USAR
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const post = await getPost(resolvedParams.slug);
@@ -68,17 +68,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  // --- A CORREÇÃO ESTÁ AQUI ---
+  // Criamos a variável postImage antes de retornar os dados
+  const postImage = post.mainImage
+    ? urlFor(post.mainImage).width(1200).height(630).url()
+    : '/imagem-social-share.png'; // Caminho da imagem padrão na pasta public
+  // ----------------------------
+
   return {
     // Aqui definimos o título que aparece na aba do navegador e no Google
     title: `${post.title} | Asa Web`,
-    // A descrição é crucial para o SEO (o texto cinza que aparece abaixo do link no Google)
+    // A descrição é crucial para o SEO
     description: post.excerpt || `Leia o artigo completo sobre ${post.title} no blog da Asa Web.`,
     
     // Bônus: Isso faz o link ficar bonito quando compartilhado no WhatsApp/LinkedIn
     openGraph: {
       title: post.title,
       description: post.excerpt,
-      images: post.mainImage ? [urlFor(post.mainImage).url()] : [],
+      images: [
+        {
+          url: postImage, // Agora a variável existe e o erro sumiu!
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
   };
 }
@@ -158,7 +172,7 @@ export default async function PostPage({ params }: Props) {
                       <span style={{ fontSize: '0.8rem', color: 'var(--verde-main)', fontWeight: 'bold' }}>
                         {relatedPost.categories[0].title}
                       </span>
-                   )}
+                    )}
                    <h4 style={{ margin: '10px 0', fontSize: '1rem' }}>{relatedPost.title}</h4>
                 </div>
               </Link>
