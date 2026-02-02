@@ -57,7 +57,7 @@ export default function Home() {
 
   useEffect(() => {
     // Insira seu ID do GA4 aqui
-    ReactGA.initialize("G-XXXXXXXXXX");
+    ReactGA.initialize("G-BLV25S4PX9");
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
   }, []);
 
