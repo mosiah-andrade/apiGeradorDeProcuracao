@@ -267,9 +267,12 @@ export default function Home() {
                   <label htmlFor="concessionaria">Concessionária</label>
                   <select id="concessionaria" name="concessionaria" value={formData.concessionaria} onChange={handleChange}>
                     <option value="" >Selecione...</option>
-                    <option value="CELPE">CELPE (Neoenergia)</option>
-                    <option value="COELBA">COELBA (Neoenergia)</option>
-                    <option value="COSERN">COSERN (Neoenergia)</option>
+                    <option value="COELBA">Bahia (Neoenergia)</option>
+                    <option value="edp-espiritosanto">Espirito Santo (EDP)</option>
+                    <option value="equatorial-para">Pará (Equatorial)</option>
+                    <option value="CELPE">Pernambuco (Neoenergia)</option>
+                    <option value="COSERN">Rio Grande Do Norte (Neoenergia)</option>
+                    <option value="edp-saopaulo">Sao Paulo (EDP)</option>
                   </select>
                 </div>
                 <div className="half">
