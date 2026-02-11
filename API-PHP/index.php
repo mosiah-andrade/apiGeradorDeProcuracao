@@ -138,15 +138,37 @@ try {
 }
 
 // Função auxiliar recursiva
+// Função auxiliar recursiva melhorada para lidar com fragmentação do Word
 function substituirPlaceholders($xml, $dados, $prefixo = '') {
     foreach ($dados as $chave => $valor) {
         if ($chave === 'arquivo_modelo') continue;
+        
         if (is_array($valor)) {
             $xml = substituirPlaceholders($xml, $valor, $prefixo . $chave . ".");
         } else {
-            $p1 = "{{" . $prefixo . $chave . "}}";
             $valLimpo = htmlspecialchars($valor ?? '', ENT_XML1, 'UTF-8');
+            $chaveCompleta = $prefixo . $chave;
+            
+            // 1. Tenta substituição simples (caso o Word não tenha quebrado a tag)
+            $p1 = "{{" . $chaveCompleta . "}}";
             $xml = str_replace($p1, $valLimpo, $xml);
+
+            // 2. Tenta substituição com REGEX (caso o Word tenha colocado tags no meio)
+            // Procura por {{, seguido de qualquer tag XML ou a chave, até fechar }}
+            // Exemplo: O Word salva como <w:t>{{</w:t><w:t>NOME</w:t><w:t>}}</w:t>
+            
+            // Escapa a chave para usar no regex
+            $chaveRegex = preg_quote($chaveCompleta, '/');
+            
+            // Regex explicada:
+            // \{\{             -> Abre chaves
+            // (?:<[^>]+>)* -> Ignora qualquer tag XML <...> (zero ou mais vezes)
+            // CHAVE            -> O nome da variável
+            // (?:<[^>]+>)* -> Ignora tags XML de novo
+            // \}\}             -> Fecha chaves
+            $pattern = '/\{\{(?:<[^>]+>)*' . $chaveRegex . '(?:<[^>]+>)*\}\}/';
+            
+            $xml = preg_replace($pattern, $valLimpo, $xml);
         }
     }
     return $xml;

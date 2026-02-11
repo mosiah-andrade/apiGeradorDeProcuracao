@@ -689,3 +689,14 @@ button:disabled {
     margin-bottom: 20px;
   }
 }
+
+.selectHover:hover{
+  background-color: rgba(5, 150, 105, 0.1); /* Fundo verde suave ao passar o mouse */
+  border: none;
+  color: #ffffff; 
+  font-family: var(--font-lato), sans-serif;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  cursor: pointer;
+  }
