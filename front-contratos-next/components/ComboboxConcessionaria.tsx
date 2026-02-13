@@ -12,6 +12,25 @@ export default function ComboboxConcessionaria({ value, onChange }: ComboboxProp
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+ 
+  const handleOpen = () => {
+    setIsOpen(true);
+
+    // Verifica se é mobile (comum usar 768px como limite para tablets/celulares)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+    if (isMobile) {
+      // O timeout aguarda a subida do teclado virtual
+      setTimeout(() => {
+        if (dropdownRef.current) {
+          dropdownRef.current.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "start" 
+          });
+        }
+      }, 350);
+    }
+  };
 
   // Fecha o dropdown ao clicar fora
   useEffect(() => {
@@ -65,9 +84,10 @@ export default function ComboboxConcessionaria({ value, onChange }: ComboboxProp
           placeholder="Busque por nome ou cidade..."
           onChange={(event) => {
             setQuery(event.target.value);
-            setIsOpen(true);
+            if (!isOpen) handleOpen(); // Abre e faz scroll se for mobile
           }}
-          onClick={() => setIsOpen(true)}
+          onClick={handleOpen} // Gatilho ao clicar
+          onFocus={handleOpen} // Gatilho ao navegar via Tab
           value={isOpen ? query : (selectedItem ? selectedItem.nome : "")} 
         />
         
@@ -87,8 +107,8 @@ export default function ComboboxConcessionaria({ value, onChange }: ComboboxProp
 
       {/* Lista Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-full rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top">
-          <ul className="max-h-60 overflow-auto py-2 custom-scrollbar">
+        <div className="absolute z-[999] mt-2 w-full rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top">
+          <ul className="max-h-60 sm:max-h-60 max-h-[180px] overflow-auto py-2 custom-scrollbar">
             {filteredPeople.length === 0 ? (
               <div className="relative cursor-default select-none py-6 px-4 text-center text-gray-500">
                 <span className="block text-2xl mb-2">😕</span>
