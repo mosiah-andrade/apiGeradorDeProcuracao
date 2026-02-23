@@ -11,6 +11,7 @@ export default function Navbar() {
         <div className="nav-links">
           <Link href="/" className="nav-item">Início</Link>
           <Link href="/blog" className="nav-item">Blog</Link>
+          <Link href="/calculadora-solar" className="nav-item">Calculadora Solar</Link>
         </div>
       </div>
     </nav>
