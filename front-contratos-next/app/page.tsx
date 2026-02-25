@@ -198,21 +198,28 @@ export default function Home() {
 
   return (
     <main className="page-wrapper">
-      <section className="hero py-12" style={{backgroundImage: "url('/hero.jpg')", color: '#fff', width: '100%', display: 'flex', flexDirection: 'row-reverse', height: '80vh', backgroundSize: 'cover', backgroundPosition: 'center', paddingRight: '150px'}}>
+      <section 
+        className="hero w-full min-h-[80vh] py-12  flex flex-col justify-center items-center text-center md:flex-row md:justify-end md:items-center md:text-left md:pr-[150px]" 
+        style={{
+          backgroundImage: "url('/hero.jpg')", 
+          color: '#fff', 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center'
+        }}
+      >
         
-        <div className="container" style={{maxHeight: 'fit-content', width: '700px', backgroundColor: 'rgba(17, 24, 39, 0.93)', padding: '30px', borderRadius: '12px'}}>
-          <div className="grid md:grid-cols-2 gap-6 items-center">
+        <div className="max-h-fit max-w-[500px] w-[90vw] " style={{  backgroundColor: 'rgba(17, 24, 39, 0.93)', padding: '30px', borderRadius: '12px'}}>
+          <div className="d-flex flex-col items-start justify-center h-full gap-6">
             <div>
-              <h1 className="text-4xl font-bold mb-3">Gerador de Procuração Solar</h1>
-              <p className="text-gray-600 mb-6">Selecione sua concessionária abaixo e clique em Gerar Procuração para abrir o formulário.</p>
+              <h1 className="text-2xl font-bold mb-3 text-white">Gerador de Procuração Solar</h1>
+              <p className="text-gray-600 mb-6 text-sm text-gray-300">Selecione sua concessionária abaixo e clique em Gerar Procuração para abrir o formulário.</p>
               <div style={{maxWidth: '100%', marginBottom: 22}}>
                 <ComboboxConcessionaria value={formData.concessionaria} onChange={handleSelectConcessionaria}  />
               </div>
             </div>
 
-            {/* Card flutuante à direita */}
-            <div className="flex justify-center md:justify-end">
-              <div className="min-w-[320px] bg-white rounded-xl shadow-xl p-6" style={{transform: 'translateY(-10px)'}}>
+            <div className="flex ">
+              <div className="min-w-[80%] bg-white rounded-xl shadow-xl p-6 " style={{transform: 'translateY(-10px)'}}>
                 <h3 className="text-lg font-semibold mb-2">Pronto para gerar</h3>
                 <p className="text-sm text-gray-500 mb-4">A concessionária selecionada ficará pré-selecionada no formulário.</p>
                 <button

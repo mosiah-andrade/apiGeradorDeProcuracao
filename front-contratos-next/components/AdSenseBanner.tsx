@@ -27,7 +27,7 @@ const AdSenseBanner = () => {
   return (
     // ESTILO DE SEGURANÇA:
     // min-width e min-height garantem que o espaço exista mesmo antes do anúncio chegar
-    <div style={{ 
+    <div className="max-h-[80vh]" style={{ 
         overflow: 'hidden', 
         // minHeight: '250px', 
         minWidth: '300px', 
@@ -38,7 +38,6 @@ const AdSenseBanner = () => {
         alignItems: 'center',
         margin: '0 auto',
         width: '100%',
-        height: 'auto',
         
         
     }}>
@@ -52,13 +51,11 @@ const AdSenseBanner = () => {
            data-ad-test="on"
           >
            </ins> */}
-      <img src={'/adsDev.png'} alt="Anúncio" onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')} style={{ 
-          maxWidth: '100%', 
-          height: 'auto', 
+      <img src={'/adsDev.png'} alt="Anúncio" onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')}  className="w-full h-full max-w-[700px]" style={{
           display: 'block',
           cursor: 'pointer', // Cursor de mão para indicar que é clicável
         }} /> 
-        <p style={{
+        <p className="w-auto max-w-[700px]" style={{
           backgroundColor: 'lightgray',
           width: '100%',
           textAlign: 'center',
