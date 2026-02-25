@@ -33,11 +33,12 @@ const AdSenseBanner = () => {
         minWidth: '300px', 
         // background: '#f1f1f1', // Cor de fundo para não ficar buraco negro
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         margin: '0 auto',
         width: '100%',
-        height: 'auto'
+        height: 'auto',
         
         
     }}>
@@ -51,11 +52,28 @@ const AdSenseBanner = () => {
            data-ad-test="on"
           >
            </ins> */}
-      {/* <img src={'/imagem-social-share.png'} alt="Anúncio" style={{ 
+      <img src={'/adsDev.png'} alt="Anúncio" onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')} style={{ 
           maxWidth: '100%', 
           height: 'auto', 
-          display: 'block' 
-        }} /> */}
+          display: 'block',
+          cursor: 'pointer', // Cursor de mão para indicar que é clicável
+        }} /> 
+        <p style={{
+          backgroundColor: 'lightgray',
+          width: '100%',
+          textAlign: 'center',
+          marginTop: '0px',
+          fontStyle: 'italic',
+          color: '#333',
+          fontSize: '12px',
+          padding: '4px 0',
+          borderRadius: '0 0 8px 8px',
+          userSelect: 'none',
+          cursor: 'pointer', 
+        }} onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank') 
+        }>Anuncio</p>
+
+
     </div>
   );
 };
