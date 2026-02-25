@@ -24,12 +24,14 @@ export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClo
 
         <div className="ad-container" style={{margin: '15px 0'}}>
           <AdSenseBanner />
+
+          
         </div>
         
         {readyToDownload && (
           <>
-            <p className="text-green-500 font-bold text-lg">Download Iniciado!</p>
-            <button onClick={onClose} className="btn-secondary mt-2 text-gray-800">FECHAR</button>
+            <p className="text-green-500 font-bold text-lg" style={{color: 'black'}}>Download Iniciado!</p>
+            <button onClick={onClose} className="btn-secondary mt-2 text-gray-800" style={{color: 'black'}}>FECHAR</button>
           </>
         )}
       </div>

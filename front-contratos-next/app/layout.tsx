@@ -74,7 +74,25 @@ export default function RootLayout({
         </main>
 
         <CookieBanner />
-        <p className="footer-note">© {new Date().getFullYear()} AsaWeb Tech. Todos os direitos reservados. <a href="/politica-de-privacidade" style={{color: '#007bff'}}>Política de Privacidade</a></p>
+        <div className="footer-container" style={{ textAlign: 'center', padding: '20px' }}>
+          <p className="footer-contact" style={{ marginBottom: '8px' }}>
+            Dúvidas ou suporte? Fale conosco no WhatsApp:{' '}
+            <a 
+              href="https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20a%20Asaweb!" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ color: '#25D366', textDecoration: 'none', fontWeight: 'bold' }}
+            >
+              (81) 8928-9155
+            </a>
+          </p>
+          <p className="footer-note" style={{ fontSize: '14px', color: '#666' }}>
+            © {new Date().getFullYear()} Asaweb.tech. Todos os direitos reservados. |{' '}
+            <a href="/politica-de-privacidade" style={{ color: '#007bff', textDecoration: 'none' }}>
+              Política de Privacidade
+            </a>
+          </p>
+        </div>
         <Script
           id="adsense-init"
           async
