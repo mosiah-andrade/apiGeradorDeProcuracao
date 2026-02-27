@@ -3,44 +3,24 @@
 import React, { useEffect, useRef } from 'react';
 
 const AdSenseBanner = ({ adKey = 0 }: { adKey?: number }) => {
-  const adRef = useRef<HTMLDivElement>(null);
 
   // Define se mostra Adsterra (par) ou adsDev (ímpar)
   const isAdsterraTurn = adKey % 2 === 0;
 
-  useEffect(() => {
-    // Só dispara o script se for a vez da Adsterra (par)
-    if (isAdsterraTurn) {
-      const timer = setTimeout(() => {
-        try {
-          if (typeof window !== 'undefined' && adRef.current) {
-            // Limpa o container para evitar anúncios duplicados em re-renders
-            adRef.current.innerHTML = '';
+  const iframeContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 250px; overflow: hidden; }</style>
+      </head>
+      <body>
+        <div id="container-6884d9994893fc4e4dc7fcbefa9e2832"></div>
+        <script async="async" data-cfasync="false" src="https://pl28807824.effectivegatecpm.com/6884d9994893fc4e4dc7fcbefa9e2832/invoke.js"></script>
+      </body>
+    </html>
+  `;
 
-            // --- OPÇÃO 1: ADSTERRA SIMPLIFICADO (Ativo) ---
-            const script = document.createElement('script');
-            script.src = "https://pl28807824.effectivegatecpm.com/6884d9994893fc4e4dc7fcbefa9e2832/invoke.js";
-            script.async = true;
-            script.setAttribute('data-cfasync', 'false');
-            adRef.current.appendChild(script);
-
-            // --- OPÇÃO 3: GOOGLE ADSENSE (Comentado) ---
-            /* if ((window as any).adsbygoogle) {
-                (window as any).adsbygoogle.push({});
-            } 
-            */
-          }
-        } catch (e: any) {
-          console.log("Aviso de Ads:", e.message);
-        }
-      }, 500); 
-
-      return () => {
-        clearTimeout(timer);
-        if (adRef.current) adRef.current.innerHTML = '';
-      };
-    } 
-  }, [isAdsterraTurn]);
 
   return (
     <div style={{ 
@@ -52,10 +32,11 @@ const AdSenseBanner = ({ adKey = 0 }: { adKey?: number }) => {
     }}>
       {isAdsterraTurn ? (
         /* CONTAINER PRINCIPAL: O ID deve bater com o script ativo (Adsterra) */
-        <div 
-          ref={adRef} 
-          id="container-6884d9994893fc4e4dc7fcbefa9e2832" 
-          style={{ width: '100%', minHeight: '250px', textAlign: 'center' }}
+        <iframe 
+          title="Advertisement"
+          srcDoc={iframeContent}
+          style={{ width: '100%', minHeight: '250px', border: 'none', overflow: 'hidden' }}
+          scrolling="no"
         />
       ) : (
         <>

@@ -24,7 +24,7 @@ export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClo
         )}
 
         <div className="ad-container" style={{margin: '15px 0'}}>
-          <AdSenseBanner key={adKey} />
+          <AdSenseBanner key={adKey} adKey={adKey}/>
 
           
         </div>

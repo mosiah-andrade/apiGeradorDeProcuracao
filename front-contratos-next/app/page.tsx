@@ -150,6 +150,17 @@ export default function Home() {
 
       if (!response.ok) throw new Error('Erro ao gerar documento.');
       setDownloadBlob(await response.blob());
+
+      // Limpa os dados do formulário após o sucesso
+      setFormData({
+        nome: '', cpf: '', rg: '', orgao_emissor: '',
+        endereco: '', cidade: '', classificacao: 'Monofásico',
+        contacontrato: '', bairro: '', cep: '',
+        concessionaria: '', cidade_concessionaria: '', cnpj_concessionaria: '',
+        representante: '', cpf_representante: '',
+        nome_CONTRATADO: '', rg_CONTRATADO: '', orgao_emissor_CONTRATADO: '',
+        cpf_CONTRATADO: '', endereco_CONTRATADO: ''
+      });
       
     } catch (error: any) {
       alert('Erro: ' + error.message);
