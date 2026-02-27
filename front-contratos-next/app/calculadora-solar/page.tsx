@@ -1,11 +1,46 @@
 "use client";
 
 import AnaliseTecnica from '@/components/Analise-tecnica';
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 
 
 
 export default function CalculadoraSolarPro() {
+  const adRef = useRef<HTMLDivElement>(null);
+
+
+  useEffect(() => {
+    {
+        const timer = setTimeout(() => {
+          try {
+            if (typeof window !== 'undefined' && adRef.current) {
+              // Limpa o container para evitar anúncios duplicados em re-renders
+              adRef.current.innerHTML = '';
+  
+              // --- OPÇÃO 1: ADSTERRA SIMPLIFICADO (Ativo) ---
+              const script = document.createElement('script');
+              script.src = "https://pl28807824.effectivegatecpm.com/6884d9994893fc4e4dc7fcbefa9e2832/invoke.js";
+              script.async = true;
+              script.setAttribute('data-cfasync', 'false');
+              adRef.current.appendChild(script);
+  
+              // --- OPÇÃO 3: GOOGLE ADSENSE (Comentado) ---
+              /* if ((window as any).adsbygoogle) {
+                  (window as any).adsbygoogle.push({});
+              } 
+              */
+            }
+          } catch (e: any) {
+            console.log("Aviso de Ads:", e.message);
+          }
+        }, 500); 
+  
+        return () => {
+          clearTimeout(timer);
+          if (adRef.current) adRef.current.innerHTML = '';
+        };
+      } 
+  }, []);
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 max-w-full m-auto px-4">
       <header className="mb-8 border-b pb-4">
@@ -20,6 +55,11 @@ export default function CalculadoraSolarPro() {
             <AnaliseTecnica />
           </div>
             <img src="/adsDev.png" alt="" width={350} className='m-auto'/>
+            <div 
+              ref={adRef} 
+              id="container-6884d9994893fc4e4dc7fcbefa9e2832" 
+              style={{ width: '100%', minHeight: '250px', textAlign: 'center' }}
+            />
         </div>
         <div  className="w-[700px] max-w-[90vw]">
           <img src="/imagem-social-share.png" alt="" className="w-[500px] max-w-[90vw] m-auto"/>
