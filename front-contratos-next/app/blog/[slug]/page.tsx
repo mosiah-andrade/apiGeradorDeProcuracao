@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import { PortableText } from '@portabletext/react';
 import { getPost, getPosts } from '../../lib/posts';
 import { urlFor } from '../../lib/sanity';
@@ -108,6 +109,13 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <div className="" style={{maxWidth: '80%', padding: '20px', margin: '0 auto'}}  >
+
+      <Script 
+        id="adsterra-blog-script"
+        src="https://pl28808105.effectivegatecpm.com/19/7c/9b/197c9b51ee707bacb09965dd5868af46.js"
+        strategy="afterInteractive" // Carrega após a página ficar interativa
+      />
+      
       <Link href="/blog" className="btn-link" style={{marginBottom: '20px', display:'inline-block'}}>
         &larr; Voltar para o Blog
       </Link>
