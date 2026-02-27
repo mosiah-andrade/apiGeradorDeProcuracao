@@ -1,112 +1,91 @@
-// src/AdSenseBanner.jsx
+// src/AdSenseBanner.tsx
 "use client";
 import React, { useEffect, useRef } from 'react';
-import Script from 'next/script';
 
 const AdSenseBanner = () => {
   const adRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // TEMPORIZADOR: Espera 500ms (meio segundo) para o Modal abrir totalmente
-    // Isso evita o erro "availableWidth=0"
     const timer = setTimeout(() => {
       try {
-        if (window.adsbygoogle) {
-            // Empurra o anúncio para o Google processar
-            window.adsbygoogle.push({});
-        }
-        // Gatilho manual para o Adsterra caso o Script do Next não injete no lugar certo
-        if (adRef.current && adRef.current.innerHTML === '') {
-           const conf = document.createElement('script');
-           conf.innerHTML = `atOptions = { 'key' : '40136a8726fe48e94d088938f9de0255', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };`;
-           const sdk = document.createElement('script');
-           sdk.src = "https://www.highperformanceformat.com/40136a8726fe48e94d088938f9de0255/invoke.js";
-           adRef.current.appendChild(conf);
-           adRef.current.appendChild(sdk);
+        if (typeof window !== 'undefined' && adRef.current) {
+          // Limpa o container para evitar anúncios duplicados em re-renders
+          adRef.current.innerHTML = '';
+
+          // --- OPÇÃO 1: ADSTERRA SIMPLIFICADO (Ativo) ---
+          const script = document.createElement('script');
+          script.src = "https://pl28807824.effectivegatecpm.com/6884d9994893fc4e4dc7fcbefa9e2832/invoke.js";
+          script.async = true;
+          script.setAttribute('data-cfasync', 'false');
+          adRef.current.appendChild(script);
+
+          // --- OPÇÃO 3: GOOGLE ADSENSE (Comentado) ---
+          /* if ((window as any).adsbygoogle) {
+              (window as any).adsbygoogle.push({});
+          } 
+          */
         }
       } catch (e: any) {
-        // Ignora o erro "All 'ins' elements..." que acontece no React em desenvolvimento
-        console.log("Aviso do AdSense (Normal em dev):", e.message);
+        console.log("Aviso de Ads:", e.message);
       }
     }, 500); 
 
-    // Limpa o timer se o usuário fechar o modal antes de carregar
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    // ESTILO DE SEGURANÇA:
-    // min-width e min-height garantem que o espaço exista mesmo antes do anúncio chegar
-    <div className="max-h-[80vh]" style={{ 
-        overflow: 'hidden', 
-        // minHeight: '250px', 
-        minWidth: '300px', 
-        // background: '#f1f1f1', // Cor de fundo para não ficar buraco negro
+    <div style={{ 
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
         alignItems: 'center',
         margin: '0 auto',
         width: '100%',
-        
-        
     }}>
-
-      {/* Container onde o Iframe vai morar */}
-      <div ref={adRef} id="adsterra-container" style={{ width: '300px', height: '250px' }}>
-        {/* O Script do Next é mais seguro, mas às vezes não injeta o anúncio no lugar certo */}
+      {/* CONTAINER PRINCIPAL: O ID deve bater com o script ativo (Adsterra) */}
+      <div 
+        ref={adRef} 
+        id="container-6884d9994893fc4e4dc7fcbefa9e2832" 
+        style={{ width: '100%', minHeight: '250px', textAlign: 'center' }}
+      >
+        {/* O Adsterra injetara o iframe aqui */}
       </div>
 
+      {/* --- BLOCO ADSENSE ORIGINAL (Comentado) --- */}
       {/* <ins className="adsbygoogle"
-           ref={adRef} 
            style={{ display: 'block', width: '100%', minWidth: '300px' }}
            data-ad-client="ca-pub-6246941190460663" 
            data-ad-slot="2899879434"
            data-ad-format="auto"
            data-full-width-responsive="true"
            data-ad-test="on"
-          >
-           </ins> */}
+      ></ins> 
+      */}
 
+      {/* --- BANNER INTERNO WHATSAPP (Comentado) --- */}
+      {/* <img 
+        src={'/adsDev.png'} 
+        alt="Anúncio" 
+        onClick={() => window.open('https://wa.me/558189289155?text=Olá...', '_blank')}  
+        className="w-full h-full max-w-[700px]" 
+        style={{ display: 'block', cursor: 'pointer', marginTop: '10px' }} 
+      /> 
+      */}
 
-      <img src={'/adsDev.png'} alt="Anúncio" onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')}  className="w-full h-full max-w-[700px]" style={{
-          display: 'block',
-          cursor: 'pointer', // Cursor de mão para indicar que é clicável
-        }} /> 
-
-{/*         
-        <p className="w-auto max-w-[700px]" style={{
+      {/* Rótulo clicável para Captação de Leads (WhatsApp) */}
+      <p style={{
           backgroundColor: 'lightgray',
           width: '100%',
           textAlign: 'center',
-          marginTop: '0px',
           fontStyle: 'italic',
           color: '#333',
           fontSize: '12px',
           padding: '4px 0',
           borderRadius: '0 0 8px 8px',
-          userSelect: 'none',
           cursor: 'pointer', 
-        }} onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank') 
-        }>Anuncio</p> */}
-
-
-      {/* highperformanceformat config + loader */}
-      <Script
-        id="hp-options"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            atOptions = {
-              'key' : '40136a8726fe48e94d088938f9de0255',
-              'format' : 'iframe',
-              'height' : 250,
-              'width' : 300,
-              'params' : {}
-            };
-          `
-        }}
-      />
+          userSelect: 'none'
+        }} onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')}>
+        Anuncio
+      </p>
     </div>
   );
 };
