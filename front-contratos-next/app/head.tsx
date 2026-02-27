@@ -18,8 +18,6 @@ export default function Head() {
       <meta name="twitter:description" content="Rápido, seguro e gratuito para integradores." />
       <meta name="twitter:image" content="https://asaweb.tech/imagem-social-share.png" />
 
-      {/* monetag ads*/}
-      <meta name="monetag" content="4fc403896aebcefd0e3cc6fbb217090e"></meta>
 
     </>
   );

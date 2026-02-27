@@ -1,9 +1,10 @@
 // src/AdSenseBanner.jsx
 "use client";
 import React, { useEffect, useRef } from 'react';
+import Script from 'next/script';
 
 const AdSenseBanner = () => {
-  const adRef = useRef(null);
+  const adRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // TEMPORIZADOR: Espera 500ms (meio segundo) para o Modal abrir totalmente
@@ -13,6 +14,15 @@ const AdSenseBanner = () => {
         if (window.adsbygoogle) {
             // Empurra o anúncio para o Google processar
             window.adsbygoogle.push({});
+        }
+        // Gatilho manual para o Adsterra caso o Script do Next não injete no lugar certo
+        if (adRef.current && adRef.current.innerHTML === '') {
+           const conf = document.createElement('script');
+           conf.innerHTML = `atOptions = { 'key' : '40136a8726fe48e94d088938f9de0255', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };`;
+           const sdk = document.createElement('script');
+           sdk.src = "https://www.highperformanceformat.com/40136a8726fe48e94d088938f9de0255/invoke.js";
+           adRef.current.appendChild(conf);
+           adRef.current.appendChild(sdk);
         }
       } catch (e: any) {
         // Ignora o erro "All 'ins' elements..." que acontece no React em desenvolvimento
@@ -41,6 +51,12 @@ const AdSenseBanner = () => {
         
         
     }}>
+
+      {/* Container onde o Iframe vai morar */}
+      <div ref={adRef} id="adsterra-container" style={{ width: '300px', height: '250px' }}>
+        {/* O Script do Next é mais seguro, mas às vezes não injeta o anúncio no lugar certo */}
+      </div>
+
       {/* <ins className="adsbygoogle"
            ref={adRef} 
            style={{ display: 'block', width: '100%', minWidth: '300px' }}
@@ -51,10 +67,14 @@ const AdSenseBanner = () => {
            data-ad-test="on"
           >
            </ins> */}
+
+
       <img src={'/adsDev.png'} alt="Anúncio" onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')}  className="w-full h-full max-w-[700px]" style={{
           display: 'block',
           cursor: 'pointer', // Cursor de mão para indicar que é clicável
         }} /> 
+
+{/*         
         <p className="w-auto max-w-[700px]" style={{
           backgroundColor: 'lightgray',
           width: '100%',
@@ -68,9 +88,25 @@ const AdSenseBanner = () => {
           userSelect: 'none',
           cursor: 'pointer', 
         }} onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank') 
-        }>Anuncio</p>
+        }>Anuncio</p> */}
 
 
+      {/* highperformanceformat config + loader */}
+      <Script
+        id="hp-options"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            atOptions = {
+              'key' : '40136a8726fe48e94d088938f9de0255',
+              'format' : 'iframe',
+              'height' : 250,
+              'width' : 300,
+              'params' : {}
+            };
+          `
+        }}
+      />
     </div>
   );
 };
