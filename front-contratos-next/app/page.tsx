@@ -24,6 +24,7 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [readyToDownload, setReadyToDownload] = useState(false);
   const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
+  const [adKey, setAdKey] = useState(0);
 
   const titulosEtapas = ["Dados do Cliente", "Dados da Unidade Consumidora", "Dados do Contratado"];
 
@@ -127,6 +128,9 @@ export default function Home() {
     setReadyToDownload(false);
     setDownloadBlob(null); 
     setTimeLeft(15); 
+
+    // ATUALIZE A KEY AQUI para resetar o anúncio a cada nova geração
+    setAdKey(prev => prev + 1);
     
     // 2. A MÁGICA ACONTECE AQUI: Abre o anúncio e fecha o formulário
     setShowAdModal(true); 
@@ -244,6 +248,7 @@ export default function Home() {
         timeLeft={timeLeft}
         readyToDownload={readyToDownload}
         onClose={() => setShowAdModal(false)}
+        adKey={adKey}
       />
 
       {/* Modal flutuante que sobrepõe a tela e contém o formulário (oculto até abrir) */}

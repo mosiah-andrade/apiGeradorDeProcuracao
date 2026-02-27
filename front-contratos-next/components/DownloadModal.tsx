@@ -6,9 +6,10 @@ interface Props {
   timeLeft: number;
   readyToDownload: boolean;
   onClose: () => void;
+  adKey: number;
 }
 
-export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClose }: Props) {
+export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClose, adKey }: Props) {
   if (!isOpen) return null;
 
   return (
@@ -23,7 +24,7 @@ export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClo
         )}
 
         <div className="ad-container" style={{margin: '15px 0'}}>
-          <AdSenseBanner />
+          <AdSenseBanner key={adKey} />
 
           
         </div>
