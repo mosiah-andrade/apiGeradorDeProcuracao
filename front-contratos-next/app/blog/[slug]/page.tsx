@@ -1,4 +1,4 @@
-import Script from 'next/script';
+import AdBannerMobile from '@/components/AdBannerMobile';
 import { PortableText } from '@portabletext/react';
 import { getPost, getPosts } from '../../lib/posts';
 import { urlFor } from '../../lib/sanity';
@@ -110,11 +110,8 @@ export default async function PostPage({ params }: Props) {
   return (
     <div className="" style={{maxWidth: '80%', padding: '20px', margin: '0 auto'}}  >
 
-      <Script 
-        id="adsterra-blog-script"
-        src="https://pl28808105.effectivegatecpm.com/19/7c/9b/197c9b51ee707bacb09965dd5868af46.js"
-        strategy="afterInteractive" // Carrega após a página ficar interativa
-      />
+      
+      
       
       <Link href="/blog" className="btn-link" style={{marginBottom: '20px', display:'inline-block'}}>
         &larr; Voltar para o Blog
@@ -140,11 +137,11 @@ export default async function PostPage({ params }: Props) {
             <span>{new Date(post.publishedAt).toLocaleDateString('pt-BR')}</span>
           </div>
         </header>
-
+        <AdBannerMobile />
         <div className="conteudo-site" >
           <PortableText value={post.body} components={ptComponents} />
         </div>
-
+        <AdBannerMobile />
         {post.related && post.related.length > 0 && (
         <div style={{ marginTop: '80px', borderTop: '1px solid #e2e8f0', paddingTop: '40px' }}>
           <h3 style={{ fontSize: '1.5rem', marginBottom: '30px' }}>
