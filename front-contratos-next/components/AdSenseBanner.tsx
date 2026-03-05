@@ -77,7 +77,6 @@ const AdSenseBanner = ({ adKey = 0 }: { adKey?: number }) => {
         }} onClick={() => window.open('https://wa.me/558189289155?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20desenvolvimento%20de%20sites%20para%20Energia%20Solar!', '_blank')}>
         Anuncio
       </p>
-      
     </div>
   );
 };
