@@ -12,6 +12,7 @@ export default function Navbar() {
           <Link href="/" className="nav-item">Início</Link>
           <Link href="/blog" className="nav-item">Blog</Link>
           <Link href="/calculadora-solar" className="nav-item">Calculadora Solar</Link>
+          <Link href="/declaracao-posse" className="nav-item">Declaração de Posse do Imovel</Link>
         </div>
       </div>
     </nav>
