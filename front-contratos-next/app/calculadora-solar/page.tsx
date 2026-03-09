@@ -4,16 +4,7 @@ import AnaliseTecnica from '@/components/Analise-tecnica';
 import React, {useEffect, useRef} from 'react';
 import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: "Calculadora Solar Pro - Análise Técnica e Viabilidade Financeira",
-  description: "Ferramenta avançada para análise técnica e avaliação financeira de projetos de energia solar.",
-  openGraph: {
-    title: "Calculadora Solar Pro - Asaweb",
-    description: "Análise detalhada e avaliação financeira para projetos solares.",
-    images: [{ url: 'https://asaweb.tech/hero.jpg', width: 1200, height: 630 }],
-    type: 'website',
-  },
-};
+
 
 export default function CalculadoraSolarPro() {
   const adRef = useRef<HTMLDivElement>(null);
