@@ -773,3 +773,57 @@ button:disabled {
   cursor: pointer;
   }
 
+.nav-links.hidden {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .nav-links.md\:flex {
+    display: flex;
+  }
+  .md\:hidden {
+    display: none;
+  }
+}
+
+/* Link Ativo */
+.active-link {
+  color: var(--verde-main) !important;
+}
+.active-link::after {
+  width: 100% !important;
+}
+
+/* Botão de destaque na Nav (Desktop) */
+.nav-item-btn {
+  background-color: var(--verde-main);
+  color: white !important;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.nav-item-btn:hover {
+  background-color: #047857;
+  transform: translateY(-2px);
+  text-decoration: none !important;
+}
+
+/* Ajuste na Navbar Mobile do seu código original */
+@media (max-width: 600px) {
+  .nav-content {
+    flex-direction: row !important; /* Mantém logo e hambúrguer na mesma linha */
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .navbar {
+    position: fixed; /* Garante que ela não suma ao rolar no mobile */
+  }
+
+  /* Compensa a navbar fixa para o conteúdo não ficar por baixo */
+  .page-wrapper {
+    padding-top: 70px; 
+  }
+}
