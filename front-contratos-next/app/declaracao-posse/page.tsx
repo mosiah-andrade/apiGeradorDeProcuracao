@@ -5,6 +5,25 @@ import ReactGA from "react-ga4";
 import { formatarCpfCnpj, formatarRG } from '@/utils/formatters';
 import DownloadModal from '@/components/DownloadModal';
 import AdSenseBanner from '@/components/AdSenseBanner';
+import type { Metadata } from "next";
+
+// Esta metadata vai sobrescrever a do Layout apenas nesta rota
+export const metadata: Metadata = {
+  title: "Gerador de Declaração de Posse de Imóvel - Grátis",
+  description: "Crie sua declaração de posse de imóvel online de forma rápida para solicitar novo padrão de energia ou comprovar residência.",
+  keywords: ["declaração de posse", "posse de imóvel", "modelo declaração de posse", "neoenergia", "celpe"],
+  openGraph: {
+    title: "Gerador de Declaração de Posse - Asaweb",
+    description: "Gere seu documento PDF/DOCX em poucos segundos.",
+    images: [
+      {
+        url: "https://asaweb.tech/sua-imagem-de-posse.png", // Imagem específica para esta página
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+};
 
 export default function DeclaracaoPosse() {
   const [showFormModal, setShowFormModal] = useState(false);

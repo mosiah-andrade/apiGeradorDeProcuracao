@@ -81,6 +81,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${post.title} | Asa Web`,
     // A descrição é crucial para o SEO
     description: post.excerpt || `Leia o artigo completo sobre ${post.title} no blog da Asa Web.`,
+    // O alternates.canonical é o URL canônico da página, importante para SEO
+    alternates: {
+      canonical: `https://asaweb.tech/blog/${resolvedParams.slug}`,
+    },
+    // Open Graph é o que faz a prévia bonita quando compartilhada no WhatsApp/LinkedIn/Facebook
     
     // Bônus: Isso faz o link ficar bonito quando compartilhado no WhatsApp/LinkedIn
     openGraph: {
