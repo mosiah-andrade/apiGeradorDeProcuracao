@@ -30,7 +30,6 @@ const ptComponents = {
       }
       return (
         <div style={{ margin: '30px 0', width: '100%' }}>
-          {/* Usando Next/Image para otimização */}
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Imagem do artigo'}
@@ -40,12 +39,11 @@ const ptComponents = {
               display: 'flex',
               margin: '0 auto',
               width: '60%',
-              height: 'auto', // Mantém a proporção original
+              height: 'auto',
               objectFit: 'contain',
               borderRadius: '8px'
             }}
           />
-          {/* Se quiser mostrar legenda, adicione aqui */}
           {value.caption && (
             <p style={{textAlign: 'center', color: '#666', fontSize: '0.9rem', marginTop: '5px'}}>
               {value.caption}
@@ -54,7 +52,31 @@ const ptComponents = {
         </div>
       );
     }
-  }
+  },
+  // --- ADICIONE ESTE BLOCO DE MARKS ABAIXO ---
+  marks: {
+    link: ({ children, value }: any) => {
+      // Se o campo "blank" estiver marcado no Sanity OU se for um link externo (começa com http)
+      const isExternal = (value?.href || '').startsWith('http');
+      const target = value?.blank || isExternal ? '_blank' : undefined;
+      
+      return (
+        <a 
+          href={value?.href} 
+          target={target} 
+          // Se abrir em nova aba, adiciona rel por segurança e SEO
+          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+          style={{
+            color: 'var(--verde-main, #22c55e)', // Usa sua cor principal ou um verde padrão
+            textDecoration: 'underline',
+            fontWeight: '500'
+          }}
+        >
+          {children}
+        </a>
+      );
+    },
+  },
 };
 // -------------------------------------------------------------
 
@@ -81,6 +103,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${post.title} | Asa Web`,
     // A descrição é crucial para o SEO
     description: post.excerpt || `Leia o artigo completo sobre ${post.title} no blog da Asa Web.`,
+    keywords: post.seoKeywords?.join(', '),
     // O alternates.canonical é o URL canônico da página, importante para SEO
     alternates: {
       canonical: `https://asaweb.tech/blog/${resolvedParams.slug}`,
