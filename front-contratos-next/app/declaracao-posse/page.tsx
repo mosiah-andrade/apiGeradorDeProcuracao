@@ -23,7 +23,7 @@ export default function DeclaracaoPosse() {
     inicio_permanencia: '',
     motivo: '',
     nome_documento: 'Declaração de Posse',
-    municipio: ''
+    cidade: ''
   });
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function DeclaracaoPosse() {
       Inicio_permanencia: formData.inicio_permanencia,
       Motivo: formData.motivo,
       Nome_documento: formData.nome_documento,
-      Município: formData.municipio,
+      Cidade: formData.cidade,
       Dia: dataHoje.getDate().toString(),
       Mes: meses[dataHoje.getMonth()],
       Ano: dataHoje.getFullYear().toString(),
@@ -87,7 +87,7 @@ export default function DeclaracaoPosse() {
     setShowAdModal(true);
     setShowFormModal(false);
     setLoading(true);
-    ReactGA.event({ category: "Documento", action: "Gerar Posse", label: formData.municipio });
+    ReactGA.event({ category: "Documento", action: "Gerar Posse", label: formData.cidade });
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_PHP_URL || process.env.NEXT_PUBLIC_API_URL || '';
@@ -150,8 +150,8 @@ export default function DeclaracaoPosse() {
         </div>
         
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Município/UF</label>
-          <input type="text" name="municipio" value={formData.municipio} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" required />
+          <label className="block text-sm font-bold text-gray-700 mb-1">Cidade/UF</label>
+          <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" required />
         </div>
         
         <div className="md:col-span-2">
