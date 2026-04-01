@@ -20,6 +20,7 @@ export default function DeclaracaoPosse() {
     cpf_proprietario: '',
     rg_proprietario: '',
     endereco: '',
+    complemento: '',
     inicio_permanencia: '',
     motivo: '',
     nome_documento: 'Declaração de Posse',
@@ -68,6 +69,7 @@ export default function DeclaracaoPosse() {
       CPF_proprietario: formData.cpf_proprietario,
       "RG-proprietario": formData.rg_proprietario,
       Endereco: formData.endereco,
+      Complemento: formData.complemento,
       Inicio_permanencia: formData.inicio_permanencia,
       Motivo: formData.motivo,
       Nome_documento: formData.nome_documento,
@@ -142,6 +144,10 @@ export default function DeclaracaoPosse() {
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-700 mb-1">Endereço Completo do Imóvel</label>
           <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" required />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-bold text-gray-700 mb-1">Complemento</label>
+          <input type="text" name="complemento" value={formData.complemento} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Declaração de Posse - João Silva" required />
         </div>
         
         <div>
