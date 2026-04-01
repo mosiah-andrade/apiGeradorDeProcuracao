@@ -143,11 +143,11 @@ export default function DeclaracaoPosse() {
         
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-700 mb-1">Endereço Completo do Imóvel</label>
-          <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" required />
+          <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Avenida Paulista, 1000" required />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-700 mb-1">Complemento</label>
-          <input type="text" name="complemento" value={formData.complemento} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Declaração de Posse - João Silva" required />
+          <input type="text" name="complemento" value={formData.complemento} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Bloco 1, Ap. 101" required />
         </div>
         
         <div>
