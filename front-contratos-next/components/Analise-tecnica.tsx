@@ -14,107 +14,136 @@ export default function AnaliseTecnica() {
     setIsMounted(true);
   }, []);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setLoading(true);
-    setError(null);
+ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  setLoading(true);
+  setError(null);
+  
+  const formData = new FormData(event.currentTarget);
+  const rawCep = String(formData.get('cep') || '').replace(/\D/g, '');
+  const consumo = Number(formData.get('consumo')) || 0;
+  const pPainel = Number(formData.get('potenciaPainel')) || 0;
+  const qtdManual = Number(formData.get('qtdManual')) || 0;
+
+  if (!rawCep || rawCep.length < 8) {
+    setError('Informe um CEP válido (8 dígitos).');
+    setLoading(false);
+    return;
+  }
+  if (consumo <= 0 || pPainel <= 0) {
+    setError('Consumo e potência do painel devem ser maiores que zero.');
+    setLoading(false);
+    return;
+  }
+
+  try {
+    // 1. Busca de Localização (CEP)
+    const cepRes = await fetch(`https://brasilapi.com.br/api/cep/v2/${rawCep}`);
+    if (!cepRes.ok) throw new Error('CEP não encontrado.');
+    const dataCep = await cepRes.json();
     
-    const formData = new FormData(event.currentTarget);
-    const rawCep = String(formData.get('cep') || '').replace(/\D/g, '');
-    const consumo = Number(formData.get('consumo')) || 0;
-    const pPainel = Number(formData.get('potenciaPainel')) || 0;
+    let lat = dataCep.location?.coordinates?.latitude || dataCep.latitude;
+    let lon = dataCep.location?.coordinates?.longitude || dataCep.longitude;
 
-    // validação básica
-    if (!rawCep || rawCep.length < 8) {
-      setError('Informe um CEP válido (8 dígitos).');
-      setLoading(false);
-      return;
+    if (!lat || !lon) {
+      const city = encodeURIComponent(dataCep.city || '');
+      const state = encodeURIComponent(dataCep.state || '');
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&city=${city}&state=${state}&country=Brazil&limit=1`);
+      const geoData = await geoRes.json();
+      if (geoData && geoData.length > 0) {
+        lat = Number(geoData[0].lat);
+        lon = Number(geoData[0].lon);
+      } else {
+        throw new Error('Não foi possível localizar as coordenadas.');
+      }
     }
-    if (consumo <= 0 || pPainel <= 0) {
-      setError('Consumo e potência do painel devem ser maiores que zero.');
-      setLoading(false);
-      return;
+
+    // 2. Busca de Irradiação (NASA)
+    const nasaRes = await fetch(`https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&format=JSON`);
+    if (!nasaRes.ok) throw new Error('Erro ao buscar dados de radiação.');
+    const nasaData = await nasaRes.json();
+    const irradiancia = nasaData.properties.parameter.ALLSKY_SFC_SW_DWN;
+
+    // --- INÍCIO DA LÓGICA AVANÇADA ---
+
+    const hspAnual = Number(irradiancia.ANN) || 0;
+    
+    // A. PR Variável (Ajuste por temperatura regional/latitude)
+    const PR = (lat > -15 && lat < 5) ? 0.75 : 0.80;
+
+    // B. Dimensionamento (Auto ou Manual)
+    const potenciaNecessaria = hspAnual > 0 ? consumo / (hspAnual * 30 * PR) : 0;
+    let qtdPaineis = qtdManual > 0 ? qtdManual : Math.max(1, Math.ceil((potenciaNecessaria * 1000) / pPainel));
+    const potenciaRealInstalada = (qtdPaineis * pPainel) / 1000;
+
+    // C. Preço por Escala (Investimento Degressivo)
+    let precoPorKwp = 4500; 
+    if (potenciaRealInstalada >= 4) precoPorKwp = 3800;
+    if (potenciaRealInstalada >= 10) precoPorKwp = 3200;
+    const custoEstimado = Math.round(potenciaRealInstalada * precoPorKwp);
+
+    // D. Economia Mensal (Taxa Mínima + Lei 14.300 2026)
+    const tarifaMed = 0.95; 
+    const tarifaFioB = 0.25; 
+    const percentualFioB2026 = 0.60;
+    const simultaneidade = 0.30; 
+    const taxaMinimaKwh = 50; 
+
+    const economiaDireta = (consumo * simultaneidade) * tarifaMed;
+    const energiaInjetadaReal = Math.max(0, (consumo * (1 - simultaneidade)) - taxaMinimaKwh);
+    const custoFioB = energiaInjetadaReal * (tarifaFioB * percentualFioB2026);
+    const economiaInjetada = (energiaInjetadaReal * tarifaMed) - custoFioB;
+
+    const economiaLiquidaMensalBase = economiaDireta + economiaInjetada;
+
+    // E. Payback Acumulado com Inflação Energética (5% ao ano)
+    const reajusteAnual = 0.05; 
+    let investimentoRestante = custoEstimado;
+    let mesesPayback = 0;
+    let economiaMensalAtual = economiaLiquidaMensalBase;
+
+    while (investimentoRestante > 0 && mesesPayback < 300) {
+      mesesPayback++;
+      investimentoRestante -= economiaMensalAtual;
+      
+      // Aplica inflação a cada 12 meses
+      if (mesesPayback % 12 === 0) {
+        economiaMensalAtual *= (1 + reajusteAnual);
+      }
     }
+    const paybackAnos = mesesPayback / 12;
 
-    try {
-      const cepRes = await fetch(`https://brasilapi.com.br/api/cep/v2/${rawCep}`);
-      if (!cepRes.ok) throw new Error('CEP não encontrado.');
-      const dataCep = await cepRes.json();
-      
-      // extrair coordenadas de múltiplas estruturas possíveis
-      let lat: any = undefined;
-      let lon: any = undefined;
-      const loc = dataCep.location;
-      if (loc) {
-        if (loc.coordinates && typeof loc.coordinates === 'object' && 'latitude' in loc.coordinates) {
-          lat = loc.coordinates.latitude;
-          lon = loc.coordinates.longitude;
-        } else if (Array.isArray(loc.coordinates) && loc.coordinates.length >= 2) {
-          lon = loc.coordinates[0];
-          lat = loc.coordinates[1];
-        }
-      }
-      if ((!lat || !lon) && dataCep.latitude && dataCep.longitude) {
-        lat = dataCep.latitude;
-        lon = dataCep.longitude;
-      }
+    // --- FIM DA LÓGICA AVANÇADA ---
 
-      if (!lat || !lon) {
-        const city = encodeURIComponent(dataCep.city || '');
-        const state = encodeURIComponent(dataCep.state || '');
-        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&city=${city}&state=${state}&country=Brazil&limit=1`);
-        const geoData = await geoRes.json();
-        if (geoData && geoData.length > 0) {
-          lat = geoData[0].lat;
-          lon = geoData[0].lon;
-        } else {
-          throw new Error('Não foi possível localizar as coordenadas.');
-        }
-      }
-
-      const nasaUrl = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&format=JSON`;
-      const nasaRes = await fetch(nasaUrl);
-      if (!nasaRes.ok) throw new Error('Erro ao buscar dados de radiação (NASA).');
-      const nasaData = await nasaRes.json();
-      const irradiancia = nasaData.properties.parameter.ALLSKY_SFC_SW_DWN;
-
-      const hspAnual = Number(irradiancia.ANN) || 0;
-      const PR = 0.8;
-      const potenciaSistema = hspAnual > 0 ? consumo / (hspAnual * 30 * PR) : 0;
-      const qtdPaineis = potenciaSistema > 0 ? Math.max(1, Math.ceil((potenciaSistema * 1000) / pPainel)) : 0;
-      
-      const custoEstimado = potenciaSistema * 3800;
-      const tarifaMed = 0.95; // R$/kWh
-      const economiaMensal = consumo * tarifaMed;
-      const paybackAnos = economiaMensal > 0 ? custoEstimado / (economiaMensal * 12) : 0;
-
-      const mesesTratados = Object.entries(irradiancia)
-        .filter(([mes]) => mes !== 'ANN')
-        .map(([mes, hspMes]) => {
-          const hspNum = Number(hspMes) || 0;
-          const producao = hspNum > 0 && qtdPaineis > 0
-            ? Math.round(((pPainel * qtdPaineis) / 1000) * hspNum * 30 * PR)
-            : 0;
-          return { name: mes, hsp: hspNum.toFixed(2), producao };
-        });
-
-      setDadosGrafico(mesesTratados);
-      setCalculo({ 
-        potenciaSistema, 
-        qtdPaineis, 
-        custoEstimado, 
-        paybackAnos, 
-        consumo,
-        lat,
-        lon,
-        hspAnual
+    const mesesTratados = Object.entries(irradiancia)
+      .filter(([mes]) => mes !== 'ANN')
+      .map(([mes, hspMes]) => {
+        const hspNum = Number(hspMes) || 0;
+        const producao = hspNum > 0 && qtdPaineis > 0
+          ? Math.round(potenciaRealInstalada * hspNum * 30 * PR)
+          : 0;
+        return { name: mes, hsp: hspNum.toFixed(2), producao };
       });
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao processar dados. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
+
+    setDadosGrafico(mesesTratados);
+    setCalculo({ 
+      potenciaSistema: potenciaRealInstalada, 
+      qtdPaineis, 
+      custoEstimado, 
+      paybackAnos, 
+      consumo,
+      lat,
+      lon,
+      hspAnual,
+      prUtilizado: PR
+    });
+
+  } catch (err: any) {
+    setError(err?.message || 'Erro ao processar dados.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="w-full  text-slate-900 max-w-[90vw] m-auto">
@@ -154,22 +183,25 @@ export default function AnaliseTecnica() {
             required
           >
             <option value="400">Painel 400W</option>
-            <option value="450">Painel 450W</option>
-            <option value="500">Painel 500W</option>
             <option value="550">Painel 550W</option>
-            <option value="565">Painel 565W</option>
-            <option value="600">Painel 600W</option>
-            <option value="650">Painel 650W</option>
             <option value="670">Painel 670W</option>
-            <option value="700">Painel 700W</option>
           </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold mb-2 text-slate-600 uppercase">Qtd. Placas (Opcional)</label>
+          <input 
+            name="qtdManual" 
+            type="number" 
+            placeholder="Auto" 
+            className="w-full px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
         <div>
           <label className=" text-xs font-bold mb-2 text-slate-600 uppercase opacity-0 flex justify-center m-auto align-center">Calcular</label>
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full  bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold rounded transition"
+            className="w-full  bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold rounded transition px-4 py-2"
           >
             {loading ? "PROCESSANDO..." : "CALCULAR"}
           </button>
@@ -178,7 +210,6 @@ export default function AnaliseTecnica() {
 
       {calculo && (
         <div className="flex flex-wrap gap-6 justify-center">
-          {/* Coluna de Dados Técnicos */}
           <div className=" flex flex-row  flex-wrap justify-around gap-6 lg:gap-12 width-full ">
             <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg">
               <h3 className="text-blue-400 font-bold mb-4 uppercase text-xs tracking-wide">Dimensionamento</h3>
@@ -186,12 +217,17 @@ export default function AnaliseTecnica() {
                 {calculo.potenciaSistema.toFixed(2)}
                 <span className="text-lg ml-1 text-blue-300"> kWp</span>
               </div>
-              <p className="text-slate-400 text-sm mb-6">Sugestão: {calculo.qtdPaineis} módulos</p>
+              <p className="text-slate-400 text-sm mb-6">
+                Sugestão: {calculo.qtdPaineis} módulos 
+                {calculo.potenciaSistema < (calculo.consumo / (calculo.hspAnual * 30 * calculo.prUtilizado)) && (
+                  <span className="text-red-400 block text-xs">⚠️ Abaixo do consumo médio</span>
+                )}
+              </p>
               
               <div className="space-y-2 text-sm border-t border-slate-800 pt-4">
                 <div className="flex justify-between">
-                  <span>Lat/Lon:</span>
-                  <span className="text-slate-300">{Number(calculo.lat).toFixed(2)} / {Number(calculo.lon).toFixed(2)}</span>
+                  <span>Eficiência (PR):</span>
+                  <span className="text-slate-300">{(calculo.prUtilizado * 100).toFixed(0)}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>HSP Médio:</span>
@@ -207,7 +243,10 @@ export default function AnaliseTecnica() {
             <div className="bg-green-50 border border-green-200 p-6 rounded-2xl">
               <h3 className="text-green-800 font-bold mb-2 uppercase text-xs">Retorno Financeiro</h3>
               <div className="text-2xl font-bold text-green-700">
-                R$ {calculo.custoEstimado.toLocaleString('pt-br', { minimumFractionDigits: 2 })}
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                }).format(calculo.custoEstimado)}
               </div>
               <p className="text-xs text-green-600 mb-4">Investimento estimado</p>
               <div className="bg-white p-3 rounded-lg border border-green-100">
@@ -217,7 +256,6 @@ export default function AnaliseTecnica() {
             </div>
           </div>
 
-          {/* Coluna do Gráfico */}
           <div className="lg:col-span-3 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
             <h3 className="font-bold text-slate-700 mb-6 uppercase text-sm">Geração Mensal Esperada (kWh)</h3>
             <div className="h-80 bg-slate-900 rounded-lg p-2 flex items-center justify-center">
@@ -258,15 +296,13 @@ export default function AnaliseTecnica() {
             </div>
             <div className="mt-6 flex flex-wrap gap-4 justify-center text-xs font-bold uppercase tracking-wide border-t pt-4">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                Geração Sobrando
+                <span className="w-2 h-2 bg-blue-500 rounded-full"></span> Geração Sobrando
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-slate-300 rounded-full"></span>
-                Dependência da Rede
+                <span className="w-2 h-2 bg-slate-300 rounded-full"></span> Dependência da Rede
               </div>
-              <div className="flex items-center gap-2 text-slate-500">
-                Eficiência PR: 80%
+              <div className="flex items-center gap-2 text-slate-500 border-l pl-4">
+                Taxa Mínima: 50 kWh
               </div>
             </div>
           </div>
