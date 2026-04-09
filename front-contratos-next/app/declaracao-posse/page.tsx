@@ -22,7 +22,6 @@ export default function DeclaracaoPosse() {
     endereco: '',
     complemento: '',
     inicio_permanencia: '',
-    motivo: '',
     nome_documento: 'Declaração de Posse',
     cidade: ''
   });
@@ -71,7 +70,6 @@ export default function DeclaracaoPosse() {
       Endereco: formData.endereco,
       Complemento: formData.complemento,
       Inicio_permanencia: formData.inicio_permanencia,
-      Motivo: formData.motivo,
       Nome_documento: formData.nome_documento,
       Cidade: formData.cidade,
       Dia: dataHoje.getDate().toString(),
@@ -159,11 +157,7 @@ export default function DeclaracaoPosse() {
           <label className="block text-sm font-bold text-gray-700 mb-1">Cidade/UF</label>
           <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" required />
         </div>
-        
-        <div className="md:col-span-2">
-          <label className="block text-sm font-bold text-gray-700 mb-1">Motivo da Declaração</label>
-          <input type="text" name="motivo" value={formData.motivo} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: solicitação de novo padrão de energia" required />
-        </div>
+  
       </div>
       
       <button type="submit" disabled={loading} className="w-full bg-green-600 text-white py-4 rounded-xl font-extrabold hover:bg-green-700 transition-all shadow-lg active:scale-95 disabled:opacity-50">
