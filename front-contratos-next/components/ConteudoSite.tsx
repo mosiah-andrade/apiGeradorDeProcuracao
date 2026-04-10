@@ -1,80 +1,145 @@
-/* src/ConteudoSite.jsx */
 import React from 'react';
 
 const ConteudoSite = () => {
+  // Array com os links das logos das concessionárias retiradas da internet
+  const logos = [
+    { nome: 'Neoenergia', url: 'https://www.neoenergia.com/documents/107590/0/logo.svg/1192324a-0eec-3a97-3a68-900bf72197cc?version=1.0&t=1684246314344' },
+    { nome: 'Equatorial', url: 'https://logodownload.org/wp-content/uploads/2021/03/equatorial-logo-2048x513.png' },
+    { nome: 'Cemig', url: 'https://logodownload.org/wp-content/uploads/2014/07/cemig-logo-2048x515.png' },
+    { nome: 'Enel', url: 'https://logodownload.org/wp-content/uploads/2017/08/enel-logo-1.png' },
+    { nome: 'CPFL', url: 'https://logodownload.org/wp-content/uploads/2014/07/cpfl-energia-logo-1-2048x1502.png' },
+    { nome: 'Copel', url: 'https://logodownload.org/wp-content/uploads/2017/08/copel-logo-2.png' },
+    {nome: 'EDP', url: 'https://logodownload.org/wp-content/uploads/2017/08/edp-logo-1.png' },
+    {nome: 'Light', url: 'https://logodownload.org/wp-content/uploads/2014/07/light-logo-2048x768.png' },
+    {nome: 'RGE', url: 'https://www.rge-rs.com.br/sites/rge-rs/files/2022-01/RGE%20colorido_no_extra_space.png' },
+  ];
+
   return (
-    <div className="conteudo-site" style={{maxWidth: '850px', padding: '20px', margin: '0 auto'}}>
-      <h2>Sobre o Gerador de Procurações</h2>
-      <p>
-        A ferramenta foi desenvolvida para agilizar o processo de homologação de sistemas fotovoltaicos. 
-        Sabemos que preencher procurações manualmente para concessionárias como <strong>Celpe (Neoenergia), Coelba, Cosern e Equatorial</strong> é repetitivo e sujeito a erros.
-      </p>
+    <>
+      {/* Estilo CSS embutido para a animação infinita funcionar sem precisar mexer nas configs do Tailwind */}
+      <style>{`
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); } /* Move exatamente metade da largura total */
+        }
+        .animate-scroll {
+          animation: scroll 60s linear infinite;
+          width: max-content; /* Isso é crucial! Força o container a não se espremer */
+        }
+        .animate-scroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
 
-      <h2>O que é uma Procuração?</h2>
-      <p>
-        A procuração é um documento legal onde uma pessoa (chamada de <strong>Outorgante</strong>) 
-        transfere poderes para outra pessoa (o <strong>Outorgado</strong>) agir em seu nome. 
-        É como se você desse uma "permissão oficial" para alguém resolver problemas burocráticos por você.
-      </p>
-      <p>
-        No contexto da <strong>Energia Solar</strong>, a procuração é obrigatória. Ela serve para que o cliente (dono do imóvel) 
-        autorize o integrador ou engenheiro a falar com a concessionária (como a Neoenergia) para pedir a troca do medidor, 
-        aprovar o projeto e ligar o sistema fotovoltaico, sem que o cliente precise ir pessoalmente nas agências.
-      </p>
+      {/* LETREIRO DE CONCESSIONÁRIAS */}
+      <div className="w-full bg-gray-50 border-y border-gray-200 overflow-hidden py-6 mb-8 flex">
+        <div className="flex animate-scroll items-center">
+          {/* Multiplicamos a lista por 4 para garantir que nunca falte imagem em telas grandes */}
+          {[...logos, ...logos, ...logos, ...logos].map((logo, index) => (
+            <div 
+              key={index} 
+              // w-48 e flex-shrink-0 garantem que cada bloco tenha a mesma largura e nunca amasse
+              className="w-40 sm:w-48 md:w-56 flex-shrink-0 flex justify-center px-4"
+            >
+              <img 
+                src={logo.url} 
+                alt={`Logo ${logo.nome}`} 
+                className="h-10 md:h-12 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <section className="max-w-4xl mx-auto px-4 py-10 space-y-10 text-gray-700">
+        
+        {/* Introdução e Proposta de Valor */}
+        <article className="space-y-4">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Sobre o Asaweb: Software Gerador de Documentos para Energia Solar
+          </h2>
+          <p className="text-lg leading-relaxed">
+            O <strong>Asaweb</strong> foi desenvolvido exclusivamente para agilizar e automatizar o processo de homologação de sistemas fotovoltaicos. 
+            Sabemos que o preenchimento manual de documentos técnicos para concessionárias — como <strong>Neoenergia, Equatorial, Cemig e Enel</strong> — é uma tarefa repetitiva que consome horas preciosas do integrador e está frequentemente sujeita a erros que geram reprovações nos projetos.
+          </p>
+        </article>
 
-      <h2>Como funciona a Homologação?</h2>
-      <p>
-        Para dar entrada no projeto de energia solar, o integrador precisa da autorização do cliente. 
-        Este documento (Procuração) permite que o engenheiro ou responsável técnico solicite o acesso, 
-        troca de titularidade ou vistoria junto à concessionária de energia.
-      </p>
+        {/* Explicação Técnica (SEO para palavras-chave de topo de funil) */}
+        <article className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Por que a Procuração e a Declaração de Posse são essenciais?
+          </h2>
+          <p className="leading-relaxed">
+            No contexto da <strong>Energia Solar (Geração Distribuída)</strong>, a documentação legal correta é o primeiro passo para o sucesso da instalação:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>
+              <strong>Procuração para Homologação Solar:</strong> É o documento obrigatório onde o cliente (Outorgante) autoriza o engenheiro ou a empresa integradora (Outorgado) a representá-lo junto à concessionária de energia. Ela permite solicitar o acesso, aprovar o projeto, pedir vistoria e solicitar a troca do medidor bidirecional sem a presença física do cliente.
+            </li>
+            <li>
+              <strong>Declaração de Posse:</strong> Frequentemente exigida quando o cliente não possui a escritura definitiva do imóvel. É vital para comprovar o vínculo do titular com o local de instalação do sistema fotovoltaico.
+            </li>
+          </ul>
+        </article>
 
-      <h2>Vantagens do Sistema</h2>
-      <ul>
-        <li><strong>Padronização:</strong> Modelos atualizados conforme as normas da ANEEL e concessionárias locais.</li>
-        <li><strong>Agilidade:</strong> Gere documentos em PDF/Word prontos para assinatura em menos de 1 minuto.</li>
-        <li><strong>Segurança:</strong> Seus dados são processados localmente para gerar o contrato.</li>
-      </ul>
+        {/* Vantagens (Bullets fáceis de ler) */}
+        <article className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900">Vantagens para Integradores Solares</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <h3 className="font-bold text-gray-900 mb-2">📑 Padronização ANEEL</h3>
+              <p className="text-sm">Modelos constantemente atualizados de acordo com as normas da ANEEL e exigências específicas das distribuidoras regionais.</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <h3 className="font-bold text-gray-900 mb-2">⚡ Agilidade Extrema</h3>
+              <p className="text-sm">Abandone o Word manual. Gere documentos precisos em formato .docx ou PDF, prontos para assinatura, em menos de 1 minuto.</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <h3 className="font-bold text-gray-900 mb-2">🔒 Privacidade e Segurança</h3>
+              <p className="text-sm">Processamento seguro na nossa API dedicada. As informações sensíveis dos seus clientes são utilizadas apenas no momento da montagem do arquivo.</p>
+            </div>
+          </div>
+        </article>
 
-      <h2>Dúvidas Frequentes</h2>
-      <p>
-        <strong>O documento serve para Pessoa Jurídica?</strong><br/>
-        Sim. Nossa ferramenta suporta tanto CPF quanto CNPJ. Basta selecionar a opção correspondente no formulário acima.
-      </p>
-      <p>
-        <strong>É seguro colocar os dados do meu cliente aqui?</strong><br/>
-        Sim. O gerador processa as informações localmente no seu navegador e na nossa API segura apenas para montar o arquivo DOCX. Não armazenamos banco de dados com informações pessoais dos seus clientes.
-      </p>
+        {/* FAQ Otimizado para "Pessoas também perguntam" do Google */}
+        <article className="space-y-6">
+          <h2 className="text-2xl font-bold text-gray-900">Dúvidas Frequentes sobre Homologação</h2>
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-800">O documento gerado atende Pessoa Física (PF) e Jurídica (PJ)?</h3>
+              <p className="mt-1 text-gray-600">Sim. O sistema Asaweb adapta automaticamente as cláusulas e o cabeçalho do documento com base na seleção de CPF ou CNPJ no formulário inicial.</p>
+            </div>
 
-      <p>
-        <strong>O documento é aceito pela Neoenergia?</strong><br/>
-        O modelo foi criado seguindo estritamente os padrões exigidos pelas normas da ANEEL e concessionárias do grupo Neoenergia (Celpe, Coelba, Cosern). Porém, sempre confira os dados antes de enviar.
-      </p>
+            <div>
+              <h3 className="font-bold text-gray-800">A Neoenergia e outras concessionárias aceitam este modelo?</h3>
+              <p className="mt-1 text-gray-600">Sim. Nossos modelos de procuração e declaração foram criados e validados com base nas exigências do grupo Neoenergia (Celpe, Coelba, Cosern) e demais grandes distribuidoras. Recomendamos apenas a revisão final antes da coleta da assinatura.</p>
+            </div>
 
-      <p>
-        <strong>Posso editar o arquivo depois de baixar?</strong><br/>
-        Sim! O arquivo é gerado em formato Word (.docx), permitindo que você faça qualquer ajuste final ou correção de formatação antes de imprimir.
-      </p>
+            <div>
+              <h3 className="font-bold text-gray-800">Posso editar o arquivo após o download?</h3>
+              <p className="mt-1 text-gray-600">Com certeza. O arquivo final é entregue em formato Microsoft Word (.docx), permitindo total liberdade para inserir a logo da sua empresa, adicionar cláusulas extras ou fazer ajustes finos.</p>
+            </div>
+          </div>
+        </article>
 
-      <h2>Etapas para Homologação de Energia Solar</h2>
-      <ol>
-        <li><strong>Solicitação de Acesso:</strong> O integrador envia o projeto e a procuração assinada pelo cliente.</li>
-        <li><strong>Análise da Concessionária:</strong> A distribuidora tem até 15 dias (GD) para emitir o parecer técnico.</li>
-        <li><strong>Instalação e Vistoria:</strong> Após a instalação dos painéis, solicita-se a vistoria para troca do medidor.</li>
-      </ol>
+        {/* Concessionárias (Tags) */}
+        <article className="space-y-4 border-t border-gray-200 pt-8">
+          <h2 className="text-xl font-bold text-gray-900">Concessionárias Compatíveis</h2>
+          <p className="text-sm mb-4">A plataforma Asaweb gera documentação adaptável para as principais redes de distribuição do Brasil:</p>
+          
+          <ul className="flex flex-wrap gap-2 tags-list">
+            <li className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Neoenergia (Celpe / PE)</li>
+            <li className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Neoenergia (Coelba / BA)</li>
+            <li className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Neoenergia (Cosern / RN)</li>
+            <li className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Equatorial Energia</li>
+            <li className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">Cemig</li>
+            <li className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">Enel</li>
+          </ul>
+        </article>
 
-      <h2>Concessionárias Suportadas</h2>
-      <p>Nossa ferramenta gera modelos compatíveis com as principais distribuidoras do Nordeste e do Brasil, incluindo:</p>
-      
-      {/* Classe CSS 'tags-list' aplica o estilo de etiquetas automaticamente */}
-      <ul className="tags-list">
-        <li>Neoenergia Pernambuco (Celpe)</li>
-        {/* Itens comentados mantidos caso queira reativar depois */}
-        {/* <li>Neoenergia Bahia (Coelba)</li>
-        <li>Neoenergia Cosern</li>
-        <li>Equatorial Energia</li> */}
-      </ul>
-    </div>
+      </section>
+    
+    </>
   );
 };
 
