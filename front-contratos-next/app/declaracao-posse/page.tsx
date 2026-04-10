@@ -90,23 +90,17 @@ export default function DeclaracaoPosse() {
     ReactGA.event({ category: "Documento", action: "Gerar Posse", label: formData.cidade });
 
     try {
-      const response = await fetch('/api/gerar-documento', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_PHP_URL || process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 
+          'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '' 
         },
         body: JSON.stringify(prepararPayloadParaAPI()),
       });
-      if (!response.ok) {
-        // Tenta ler o erro em JSON que a nossa API route enviou
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || 'Erro ao gerar documento.');
-      }
-
-      // Recebe o arquivo em Blob normalmente
-      const blob = await response.blob();
-      setDownloadBlob(blob);
-
+      if (!response.ok) throw new Error('Erro ao gerar documento.');
+      setDownloadBlob(await response.blob());
     } catch (error: any) {
       alert('Erro: ' + error.message);
       setShowAdModal(false);

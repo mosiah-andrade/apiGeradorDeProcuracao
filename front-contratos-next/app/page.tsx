@@ -141,11 +141,10 @@ export default function Home() {
     ReactGA.event({ category: "Documento", action: "Clicou Gerar", label: formData.concessionaria });
 
     try {
-      const response = await fetch('/api/gerar-documento', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_PHP_URL || process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json' 
-        },
+        headers: { 'Content-Type': 'application/json', 'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '' },
         body: JSON.stringify(prepararPayloadParaAPI()),
       });
 
