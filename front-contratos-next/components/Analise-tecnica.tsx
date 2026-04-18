@@ -1,313 +1,203 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-export default function AnaliseTecnica() {
+interface AnaliseTecnicaProps {
+  onCalcular: (dados: any) => void;
+}
+
+export default function AnaliseTecnica({ onCalcular }: AnaliseTecnicaProps) {
   const [loading, setLoading] = useState(false);
-  const [dadosGrafico, setDadosGrafico] = useState<any[]>([]);
-  const [calculo, setCalculo] = useState<any>(null);
-  const [isMounted, setIsMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
 
- const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-  setLoading(true);
-  setError(null);
-  
-  const formData = new FormData(event.currentTarget);
-  const rawCep = String(formData.get('cep') || '').replace(/\D/g, '');
-  const consumo = Number(formData.get('consumo')) || 0;
-  const pPainel = Number(formData.get('potenciaPainel')) || 0;
-  const qtdManual = Number(formData.get('qtdManual')) || 0;
+    const formData = new FormData(event.currentTarget);
+    const rawCep = String(formData.get('cep') || '').replace(/\D/g, '');
+    const consumo = Number(formData.get('consumo')) || 0;
+    const pPainel = Number(formData.get('potenciaPainel')) || 0;
+    const qtdManual = Number(formData.get('qtdManual')) || 0;
 
-  if (!rawCep || rawCep.length < 8) {
-    setError('Informe um CEP válido (8 dígitos).');
-    setLoading(false);
-    return;
-  }
-  if (consumo <= 0 || pPainel <= 0) {
-    setError('Consumo e potência do painel devem ser maiores que zero.');
-    setLoading(false);
-    return;
-  }
-
-  try {
-    // 1. Busca de Localização (CEP)
-    const cepRes = await fetch(`https://brasilapi.com.br/api/cep/v2/${rawCep}`);
-    if (!cepRes.ok) throw new Error('CEP não encontrado.');
-    const dataCep = await cepRes.json();
-    
-    let lat = dataCep.location?.coordinates?.latitude || dataCep.latitude;
-    let lon = dataCep.location?.coordinates?.longitude || dataCep.longitude;
-
-    if (!lat || !lon) {
-      const city = encodeURIComponent(dataCep.city || '');
-      const state = encodeURIComponent(dataCep.state || '');
-      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&city=${city}&state=${state}&country=Brazil&limit=1`);
-      const geoData = await geoRes.json();
-      if (geoData && geoData.length > 0) {
-        lat = Number(geoData[0].lat);
-        lon = Number(geoData[0].lon);
-      } else {
-        throw new Error('Não foi possível localizar as coordenadas.');
-      }
+    if (!rawCep || rawCep.length < 8) {
+      setError('Informe um CEP válido (8 dígitos).');
+      setLoading(false);
+      return;
+    }
+    if (consumo <= 0 || pPainel <= 0) {
+      setError('Consumo e potência do painel devem ser maiores que zero.');
+      setLoading(false);
+      return;
     }
 
-    // 2. Busca de Irradiação (NASA)
-    const nasaRes = await fetch(`https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&format=JSON`);
-    if (!nasaRes.ok) throw new Error('Erro ao buscar dados de radiação.');
-    const nasaData = await nasaRes.json();
-    const irradiancia = nasaData.properties.parameter.ALLSKY_SFC_SW_DWN;
+    try {
+      // 1. Busca de Localização (CEP)
+      const cepRes = await fetch(`https://brasilapi.com.br/api/cep/v2/${rawCep}`);
+      if (!cepRes.ok) throw new Error('CEP não encontrado.');
+      const dataCep = await cepRes.json();
 
-    // --- INÍCIO DA LÓGICA AVANÇADA ---
+      let lat = dataCep.location?.coordinates?.latitude || dataCep.latitude;
+      let lon = dataCep.location?.coordinates?.longitude || dataCep.longitude;
 
-    const hspAnual = Number(irradiancia.ANN) || 0;
-    
-    // A. PR Variável (Ajuste por temperatura regional/latitude)
-    const PR = (lat > -15 && lat < 5) ? 0.75 : 0.80;
-
-    // B. Dimensionamento (Auto ou Manual)
-    const potenciaNecessaria = hspAnual > 0 ? consumo / (hspAnual * 30 * PR) : 0;
-    let qtdPaineis = qtdManual > 0 ? qtdManual : Math.max(1, Math.ceil((potenciaNecessaria * 1000) / pPainel));
-    const potenciaRealInstalada = (qtdPaineis * pPainel) / 1000;
-
-    // C. Preço por Escala (Investimento Degressivo)
-    let precoPorKwp = 4500; 
-    if (potenciaRealInstalada >= 4) precoPorKwp = 3800;
-    if (potenciaRealInstalada >= 10) precoPorKwp = 3200;
-    const custoEstimado = Math.round(potenciaRealInstalada * precoPorKwp);
-
-    // D. Economia Mensal (Taxa Mínima + Lei 14.300 2026)
-    const tarifaMed = 0.95; 
-    const tarifaFioB = 0.25; 
-    const percentualFioB2026 = 0.60;
-    const simultaneidade = 0.30; 
-    const taxaMinimaKwh = 50; 
-
-    const economiaDireta = (consumo * simultaneidade) * tarifaMed;
-    const energiaInjetadaReal = Math.max(0, (consumo * (1 - simultaneidade)) - taxaMinimaKwh);
-    const custoFioB = energiaInjetadaReal * (tarifaFioB * percentualFioB2026);
-    const economiaInjetada = (energiaInjetadaReal * tarifaMed) - custoFioB;
-
-    const economiaLiquidaMensalBase = economiaDireta + economiaInjetada;
-
-    // E. Payback Acumulado com Inflação Energética (5% ao ano)
-    const reajusteAnual = 0.05; 
-    let investimentoRestante = custoEstimado;
-    let mesesPayback = 0;
-    let economiaMensalAtual = economiaLiquidaMensalBase;
-
-    while (investimentoRestante > 0 && mesesPayback < 300) {
-      mesesPayback++;
-      investimentoRestante -= economiaMensalAtual;
-      
-      // Aplica inflação a cada 12 meses
-      if (mesesPayback % 12 === 0) {
-        economiaMensalAtual *= (1 + reajusteAnual);
+      if (!lat || !lon) {
+        const city = encodeURIComponent(dataCep.city || '');
+        const state = encodeURIComponent(dataCep.state || '');
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&city=${city}&state=${state}&country=Brazil&limit=1`);
+        const geoData = await geoRes.json();
+        if (geoData && geoData.length > 0) {
+          lat = Number(geoData[0].lat);
+          lon = Number(geoData[0].lon);
+        } else {
+          throw new Error('Não foi possível localizar as coordenadas.');
+        }
       }
-    }
-    const paybackAnos = mesesPayback / 12;
 
-    // --- FIM DA LÓGICA AVANÇADA ---
+      // 2. Busca de Irradiação (NASA)
+      const nasaRes = await fetch(`https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=${lon}&latitude=${lat}&format=JSON`);
+      if (!nasaRes.ok) throw new Error('Erro ao buscar dados de radiação.');
+      const nasaData = await nasaRes.json();
+      const irradiancia = nasaData.properties.parameter.ALLSKY_SFC_SW_DWN;
 
-    const mesesTratados = Object.entries(irradiancia)
-      .filter(([mes]) => mes !== 'ANN')
-      .map(([mes, hspMes]) => {
-        const hspNum = Number(hspMes) || 0;
-        const producao = hspNum > 0 && qtdPaineis > 0
-          ? Math.round(potenciaRealInstalada * hspNum * 30 * PR)
-          : 0;
-        return { name: mes, hsp: hspNum.toFixed(2), producao };
+      // --- LÓGICA DE CÁLCULO ---
+      const hspAnual = Number(irradiancia.ANN) || 0;
+      const PR = (lat > -15 && lat < 5) ? 0.75 : 0.80;
+
+      const potenciaNecessaria = hspAnual > 0 ? consumo / (hspAnual * 30 * PR) : 0;
+      let qtdPaineis = qtdManual > 0 ? qtdManual : Math.max(1, Math.ceil((potenciaNecessaria * 1000) / pPainel));
+      const potenciaRealInstalada = (qtdPaineis * pPainel) / 1000;
+
+      let precoPorKwp = 4500;
+      if (potenciaRealInstalada >= 4) precoPorKwp = 3800;
+      if (potenciaRealInstalada >= 10) precoPorKwp = 3200;
+      const custoEstimado = Math.round(potenciaRealInstalada * precoPorKwp);
+
+      // Economia e Payback
+      const tarifaMed = 0.95;
+      const tarifaFioB = 0.25;
+      const percentualFioB2026 = 0.60;
+      const simultaneidade = 0.30;
+      const taxaMinimaKwh = 50;
+
+      const economiaDireta = (consumo * simultaneidade) * tarifaMed;
+      const energiaInjetadaReal = Math.max(0, (consumo * (1 - simultaneidade)) - taxaMinimaKwh);
+      const custoFioB = energiaInjetadaReal * (tarifaFioB * percentualFioB2026);
+      const economiaInjetada = (energiaInjetadaReal * tarifaMed) - custoFioB;
+      const economiaLiquidaMensalBase = economiaDireta + economiaInjetada;
+
+      let investimentoRestante = custoEstimado;
+      let mesesPayback = 0;
+      let economiaMensalAtual = economiaLiquidaMensalBase;
+
+      while (investimentoRestante > 0 && mesesPayback < 300) {
+        mesesPayback++;
+        investimentoRestante -= economiaMensalAtual;
+        if (mesesPayback % 12 === 0) economiaMensalAtual *= 1.05;
+      }
+      const paybackAnos = mesesPayback / 12;
+
+      // Montagem do Gráfico
+      const mesesTratados = Object.entries(irradiancia)
+        .filter(([mes]) => mes !== 'ANN')
+        .map(([mes, hspMes]) => {
+          const hspNum = Number(hspMes) || 0;
+          const producao = hspNum > 0 && qtdPaineis > 0
+            ? Math.round(potenciaRealInstalada * hspNum * 30 * PR)
+            : 0;
+          return { name: mes, hsp: hspNum.toFixed(2), producao };
+        });
+
+      // ENVIO DOS DADOS PARA O PAI
+      onCalcular({
+        calculo: {
+          potenciaSistema: potenciaRealInstalada,
+          qtdPaineis,
+          custoEstimado,
+          paybackAnos,
+          consumo,
+          hspAnual,
+          prUtilizado: PR,
+          custoFioB: custoFioB, 
+          economiaMensal: economiaLiquidaMensalBase,
+          percentualFioB: percentualFioB2026 * 100
+        },
+        grafico: mesesTratados
       });
 
-    setDadosGrafico(mesesTratados);
-    setCalculo({ 
-      potenciaSistema: potenciaRealInstalada, 
-      qtdPaineis, 
-      custoEstimado, 
-      paybackAnos, 
-      consumo,
-      lat,
-      lon,
-      hspAnual,
-      prUtilizado: PR
-    });
-
-  } catch (err: any) {
-    setError(err?.message || 'Erro ao processar dados.');
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao processar dados.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="w-full  text-slate-900 max-w-[90vw] m-auto">
-      <h2 className="text-center text-xl font-bold text-slate-700 mb-4">Análise Técnica</h2>
+    <div className="w-full">
+      <div className="bg-slate-50 px-4 py-3 border-b flex justify-between items-center">
+        <h2 className="text-sm font-bold text-slate-700 uppercase">Análise Técnica</h2>
+        {loading && <span className="text-[10px] text-blue-600 animate-pulse font-bold">Processando...</span>}
+      </div>
 
       {error && (
-        <div className="w-full mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="p-3 bg-red-50 border-b border-red-100 text-red-600 text-xs">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="d-flex flex-wrap gap-4 p-6 bg-slate-50 rounded-xl  border border-slate-200">
-        <div>
-          <label className="block text-xs font-bold mb-2 text-slate-600 uppercase">CEP Local</label>
-          <input 
-            name="cep" 
-            placeholder="00000-000" 
-            className="w-full px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required 
-          />
+      <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-5">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">CEP da Instalação</label>
+            <input 
+              name="cep" 
+              placeholder="00000-000" 
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              required 
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Consumo Mensal (kWh)</label>
+            <input 
+              name="consumo" 
+              type="number" 
+              placeholder="Ex: 500" 
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              required 
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Potência do Painel (W)</label>
+            <input 
+              name="potenciaPainel" 
+              type="number"
+              placeholder="Ex: 550" 
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              required  
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider text-slate-400">Qtd. Placas (Opcional)</label>
+            <input 
+              name="qtdManual" 
+              type="number" 
+              placeholder="Cálculo Automático" 
+              className="w-full px-3 py-2.5 border border-slate-100 rounded-lg text-sm bg-slate-50 focus:bg-white outline-none"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs font-bold mb-2 text-slate-600 uppercase">Consumo (kWh/mês)</label>
-          <input 
-            name="consumo" 
-            type="number" 
-            placeholder="Ex: 500" 
-            className="w-full px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required 
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-bold mb-2 text-slate-600 uppercase">Modelo do Painel</label>
-          <select 
-            name="potenciaPainel" 
-            className="w-full px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="400">Painel 400W</option>
-            <option value="550">Painel 550W</option>
-            <option value="670">Painel 670W</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-bold mb-2 text-slate-600 uppercase">Qtd. Placas (Opcional)</label>
-          <input 
-            name="qtdManual" 
-            type="number" 
-            placeholder="Auto" 
-            className="w-full px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label className=" text-xs font-bold mb-2 text-slate-600 uppercase opacity-0 flex justify-center m-auto align-center">Calcular</label>
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full  bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold rounded transition px-4 py-2"
-          >
-            {loading ? "PROCESSANDO..." : "CALCULAR"}
-          </button>
-        </div>
+
+        <button 
+          type="submit" 
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-blue-100 active:scale-[0.98] uppercase text-xs tracking-widest"
+        >
+          {loading ? "Calculando..." : "Gerar Análise"}
+        </button>
       </form>
-
-      {calculo && (
-        <div className="flex flex-wrap gap-6 justify-center">
-          <div className=" flex flex-row  flex-wrap justify-around gap-6 lg:gap-12 width-full ">
-            <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg">
-              <h3 className="text-blue-400 font-bold mb-4 uppercase text-xs tracking-wide">Dimensionamento</h3>
-              <div className="text-4xl font-black mb-2">
-                {calculo.potenciaSistema.toFixed(2)}
-                <span className="text-lg ml-1 text-blue-300"> kWp</span>
-              </div>
-              <p className="text-slate-400 text-sm mb-6">
-                Sugestão: {calculo.qtdPaineis} módulos 
-                {calculo.potenciaSistema < (calculo.consumo / (calculo.hspAnual * 30 * calculo.prUtilizado)) && (
-                  <span className="text-red-400 block text-xs">⚠️ Abaixo do consumo médio</span>
-                )}
-              </p>
-              
-              <div className="space-y-2 text-sm border-t border-slate-800 pt-4">
-                <div className="flex justify-between">
-                  <span>Eficiência (PR):</span>
-                  <span className="text-slate-300">{(calculo.prUtilizado * 100).toFixed(0)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>HSP Médio:</span>
-                  <span className="text-slate-300">{calculo.hspAnual.toFixed(2)} h/dia</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Área Ocupada: </span>
-                  <span className="text-slate-300">{ (calculo.qtdPaineis * 2.2).toFixed(1)} m²</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 p-6 rounded-2xl">
-              <h3 className="text-green-800 font-bold mb-2 uppercase text-xs">Retorno Financeiro</h3>
-              <div className="text-2xl font-bold text-green-700">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(calculo.custoEstimado)}
-              </div>
-              <p className="text-xs text-green-600 mb-4">Investimento estimado</p>
-              <div className="bg-white p-3 rounded-lg border border-green-100">
-                <span className="text-slate-500 text-xs block">Payback estimado:</span>
-                <span className="text-xl font-bold text-slate-800">{calculo.paybackAnos.toFixed(1)} Anos</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-3 bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
-            <h3 className="font-bold text-slate-700 mb-6 uppercase text-sm">Geração Mensal Esperada (kWh)</h3>
-            <div className="h-80 bg-slate-900 rounded-lg p-2 flex items-center justify-center">
-              {isMounted && dadosGrafico.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dadosGrafico}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                    <Tooltip 
-                      cursor={{ fill: '#1f2937' }} 
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-white text-slate-900 p-2 rounded border border-slate-300">
-                              <p className="font-bold">{payload[0].payload.name}</p>
-                              <p className="text-blue-600">Produção: {payload[0].value} kWh</p>
-                              <p className="text-slate-500 text-xs">Radiação: {payload[0].payload.hsp} h/dia</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar dataKey="producao" radius={[4, 4, 0, 0]}>
-                      {dadosGrafico.map((entry, index) => (
-                        <Cell 
-                          key={index} 
-                          fill={entry.producao >= calculo.consumo ? '#3b82f6' : '#cbd5e1'} 
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <p className="text-slate-400">Carregando gráfico...</p>
-              )}
-            </div>
-            <div className="mt-6 flex flex-wrap gap-4 justify-center text-xs font-bold uppercase tracking-wide border-t pt-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span> Geração Sobrando
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-slate-300 rounded-full"></span> Dependência da Rede
-              </div>
-              <div className="flex items-center gap-2 text-slate-500 border-l pl-4">
-                Taxa Mínima: 50 kWh
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
