@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface AnaliseTecnicaProps {
   onCalcular: (dados: any) => void;
@@ -17,7 +17,7 @@ export default function AnaliseTecnica({ onCalcular }: AnaliseTecnicaProps) {
 
     const formData = new FormData(event.currentTarget);
     const rawCep = String(formData.get('cep') || '').replace(/\D/g, '');
-    const consumo = Number(formData.get('consumo')) || 0;
+    const consumoInformado = Number(formData.get('consumo')) || 0;
     const pPainel = Number(formData.get('potenciaPainel')) || 0;
     const qtdManual = Number(formData.get('qtdManual')) || 0;
 
@@ -26,7 +26,7 @@ export default function AnaliseTecnica({ onCalcular }: AnaliseTecnicaProps) {
       setLoading(false);
       return;
     }
-    if (consumo <= 0 || pPainel <= 0) {
+    if (consumoInformado <= 0 || pPainel <= 0) {
       setError('Consumo e potência do painel devem ser maiores que zero.');
       setLoading(false);
       return;
@@ -60,67 +60,84 @@ export default function AnaliseTecnica({ onCalcular }: AnaliseTecnicaProps) {
       const nasaData = await nasaRes.json();
       const irradiancia = nasaData.properties.parameter.ALLSKY_SFC_SW_DWN;
 
-      // --- LÓGICA DE CÁLCULO ---
+      // --- LÓGICA DE CÁLCULO CORRIGIDA ---
       const hspAnual = Number(irradiancia.ANN) || 0;
       const PR = (lat > -15 && lat < 5) ? 0.75 : 0.80;
 
-      const potenciaNecessaria = hspAnual > 0 ? consumo / (hspAnual * 30 * PR) : 0;
+      // Dimensionamento
+      const potenciaNecessaria = hspAnual > 0 ? consumoInformado / (hspAnual * 30 * PR) : 0;
       let qtdPaineis = qtdManual > 0 ? qtdManual : Math.max(1, Math.ceil((potenciaNecessaria * 1000) / pPainel));
       const potenciaRealInstalada = (qtdPaineis * pPainel) / 1000;
 
+      // Geração Mensal Estimada (Média)
+      const geracaoMensalMedia = potenciaRealInstalada * hspAnual * 30 * PR;
+
+      // O ponto chave: A economia é limitada pelo que o sistema gera!
+      // Se o consumo é 50.000 mas gera 300, a economia é sobre os 300.
+      const consumoAbatido = Math.min(consumoInformado, geracaoMensalMedia);
+
+      // Preço de mercado estimado (Escalável)
       let precoPorKwp = 4500;
       if (potenciaRealInstalada >= 4) precoPorKwp = 3800;
-      if (potenciaRealInstalada >= 10) precoPorKwp = 3200;
+      if (potenciaRealInstalada >= 10) precoPorKwp = 3100;
+      if (potenciaRealInstalada >= 50) precoPorKwp = 2700;
       const custoEstimado = Math.round(potenciaRealInstalada * precoPorKwp);
 
-      // Economia e Payback
+      // Configurações Tarifárias
       const tarifaMed = 0.95;
       const tarifaFioB = 0.25;
-      const percentualFioB2026 = 0.60;
-      const simultaneidade = 0.30;
+      const percentualFioB = 0.60; // Em 2026 o encargo é 60%
+      const simultaneidade = 0.30; // 30% consumido na hora, 70% injetado
       const taxaMinimaKwh = 50;
 
-      const economiaDireta = (consumo * simultaneidade) * tarifaMed;
-      const energiaInjetadaReal = Math.max(0, (consumo * (1 - simultaneidade)) - taxaMinimaKwh);
-      const custoFioB = energiaInjetadaReal * (tarifaFioB * percentualFioB2026);
-      const economiaInjetada = (energiaInjetadaReal * tarifaMed) - custoFioB;
-      const economiaLiquidaMensalBase = economiaDireta + economiaInjetada;
+      // Economia Detalhada
+      const economiaDireta = (consumoAbatido * simultaneidade) * tarifaMed;
+      const energiaInjetada = Math.max(0, (consumoAbatido * (1 - simultaneidade)) - taxaMinimaKwh);
+      const custoFioB = energiaInjetada * (tarifaFioB * percentualFioB);
+      const economiaInjetadaLiquida = (energiaInjetada * tarifaMed) - custoFioB;
+      
+      const economiaLiquidaMensalBase = economiaDireta + economiaInjetadaLiquida;
 
+      // Cálculo de Payback Realista
       let investimentoRestante = custoEstimado;
       let mesesPayback = 0;
       let economiaMensalAtual = economiaLiquidaMensalBase;
 
-      while (investimentoRestante > 0 && mesesPayback < 300) {
-        mesesPayback++;
-        investimentoRestante -= economiaMensalAtual;
-        if (mesesPayback % 12 === 0) economiaMensalAtual *= 1.05;
+      if (economiaLiquidaMensalBase > 0) {
+        while (investimentoRestante > 0 && mesesPayback < 300) {
+          mesesPayback++;
+          investimentoRestante -= economiaMensalAtual;
+          // Reajuste anual da tarifa de energia (IPCA/IGPM est. 5%)
+          if (mesesPayback % 12 === 0) economiaMensalAtual *= 1.05;
+        }
+      } else {
+        mesesPayback = 999;
       }
+      
       const paybackAnos = mesesPayback / 12;
 
-      // Montagem do Gráfico
+      // Dados para o Gráfico Mensal
       const mesesTratados = Object.entries(irradiancia)
         .filter(([mes]) => mes !== 'ANN')
         .map(([mes, hspMes]) => {
           const hspNum = Number(hspMes) || 0;
-          const producao = hspNum > 0 && qtdPaineis > 0
-            ? Math.round(potenciaRealInstalada * hspNum * 30 * PR)
-            : 0;
+          const producao = Math.round(potenciaRealInstalada * hspNum * 30 * PR);
           return { name: mes, hsp: hspNum.toFixed(2), producao };
         });
 
-      // ENVIO DOS DADOS PARA O PAI
       onCalcular({
         calculo: {
           potenciaSistema: potenciaRealInstalada,
           qtdPaineis,
           custoEstimado,
           paybackAnos,
-          consumo,
+          consumo: consumoInformado,
+          geracaoMensalMedia,
           hspAnual,
           prUtilizado: PR,
           custoFioB: custoFioB, 
           economiaMensal: economiaLiquidaMensalBase,
-          percentualFioB: percentualFioB2026 * 100
+          percentualFioB: percentualFioB * 100
         },
         grafico: mesesTratados
       });
@@ -133,59 +150,59 @@ export default function AnaliseTecnica({ onCalcular }: AnaliseTecnicaProps) {
   };
 
   return (
-    <div className="w-full">
-      <div className="bg-slate-50 px-4 py-3 border-b flex justify-between items-center">
-        <h2 className="text-sm font-bold text-slate-700 uppercase">Análise Técnica</h2>
-        {loading && <span className="text-[10px] text-blue-600 animate-pulse font-bold">Processando...</span>}
+    <div className="w-full bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
+        <h2 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Análise Técnica</h2>
+        {loading && <span className="text-[10px] text-blue-600 animate-pulse font-bold">Processando Dados...</span>}
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border-b border-red-100 text-red-600 text-xs">
-          {error}
+        <div className="p-4 bg-red-50 border-b border-red-100 text-red-600 text-xs font-medium">
+          ⚠️ {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-5">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">CEP da Instalação</label>
+      <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">CEP da Instalação</label>
             <input 
               name="cep" 
               placeholder="00000-000" 
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 focus:bg-white"
               required 
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Consumo Mensal (kWh)</label>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Consumo Mensal (kWh)</label>
             <input 
               name="consumo" 
               type="number" 
               placeholder="Ex: 500" 
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white"
               required 
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Potência do Painel (W)</label>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Potência do Painel (W)</label>
             <input 
               name="potenciaPainel" 
               type="number"
               placeholder="Ex: 550" 
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 focus:bg-white"
               required  
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider text-slate-400">Qtd. Placas (Opcional)</label>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Qtd. Placas (Opcional)</label>
             <input 
               name="qtdManual" 
               type="number" 
               placeholder="Cálculo Automático" 
-              className="w-full px-3 py-2.5 border border-slate-100 rounded-lg text-sm bg-slate-50 focus:bg-white outline-none"
+              className="w-full px-4 py-3 border border-slate-100 rounded-xl text-sm bg-slate-50 focus:bg-white outline-none italic"
             />
           </div>
         </div>
@@ -193,9 +210,9 @@ export default function AnaliseTecnica({ onCalcular }: AnaliseTecnicaProps) {
         <button 
           type="submit" 
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-blue-100 active:scale-[0.98] uppercase text-xs tracking-widest"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-100 active:scale-[0.99] uppercase text-xs tracking-widest mt-2"
         >
-          {loading ? "Calculando..." : "Gerar Análise"}
+          {loading ? "Consultando NASA e Calculando..." : "Gerar Análise Completa"}
         </button>
       </form>
     </div>
