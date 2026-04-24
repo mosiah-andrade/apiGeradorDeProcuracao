@@ -2,7 +2,6 @@ import ReactGA from "react-ga4";
 import { useState, useEffect } from 'react';
 import './App.css';
 import ConteudoSite from './ConteudoSite';
-import AdSenseBanner from './AdSenseBanner';
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
 // --- FUNÇÕES DE FORMATAÇÃO (Ficam fora do componente para melhor performance) ---
@@ -404,8 +403,11 @@ function App() {
                   
                   <div className="ad-container">
                       <p style={{fontSize: '0.8rem', color: '#666'}}>Publicidade</p>
-                      <div style={{background: 'transparent', width: '100%', height: 'auto', minHeight: '250px', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                          <AdSenseBanner />
+                      <div style={{background: 'transparent', width: '100%', height: 'auto', minHeight: '250px', display:'flex', alignItems:'center', justifyContent:'center'}}>                          
+                        <div>
+                          // anuncio
+                          <BannerAnuncio adsList={adsData} key={adKey} />
+                        </div>
                       </div>
                   </div>
 

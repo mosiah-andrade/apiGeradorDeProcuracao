@@ -1,5 +1,5 @@
 import React from 'react';
-import AdSenseBanner from './AdSenseBanner';
+import AdManager from './AdManager';
 
 interface Props {
   isOpen: boolean;
@@ -24,8 +24,12 @@ export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClo
         )}
 
         <div className="ad-container" style={{margin: '15px 0'}}>
-          <AdSenseBanner key={adKey} adKey={adKey}/>
-
+           
+          <div>
+            // anuncio
+            <AdManager />
+          </div>
+        
           
         </div>
         

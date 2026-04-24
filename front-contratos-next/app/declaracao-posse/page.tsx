@@ -4,7 +4,7 @@ import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import ReactGA from "react-ga4";
 import { formatarCpfCnpj, formatarRG } from '@/utils/formatters';
 import DownloadModal from '@/components/DownloadModal';
-import AdSenseBanner from '@/components/AdSenseBanner';
+import AdManager from '@/components/AdManager';
 
 export default function DeclaracaoPosse() {
   const [showFormModal, setShowFormModal] = useState(false);
@@ -188,7 +188,12 @@ export default function DeclaracaoPosse() {
           <p className="text-gray-600 leading-relaxed">A Declaração de Posse é um documento utilizado para comprovar que uma pessoa detém a posse de um imóvel, mesmo sem o registro definitivo. É fundamental para processos de regularização e pedidos de serviços públicos.</p>
         </section>
 
-        <AdSenseBanner />
+        <div>
+          // anuncio
+          <AdManager />
+        </div>
+        
+
 
         <section className="grid md:grid-cols-2 gap-8">
           <div>
@@ -201,7 +206,11 @@ export default function DeclaracaoPosse() {
           </div>
         </section>
 
-        <AdSenseBanner />
+        <div>
+          // anuncio
+          <AdManager />
+        </div>
+        
       </div>
 
       <DownloadModal isOpen={showAdModal} timeLeft={timeLeft} readyToDownload={readyToDownload} onClose={() => setShowAdModal(false)} adKey={adKey} />

@@ -3,23 +3,37 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-// Vamos tentar importar usando o alias '@/' que vai direto para a raiz do projeto
-// Se der erro de caminho, mude para '../lib/sanity' ou '../../lib/sanity'
 import { urlFor } from '../app/lib/sanity'; // Ajuste o caminho conforme sua estrutura
 
 export default function BlogList({ posts }: { posts: any[] }) {
+  // 1. Estados para a Busca e para a Paginação
   const [searchTerm, setSearchTerm] = useState('');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+
+  const CARDS_POR_PAGINA = 8; // Limite máximo na tela
 
   // BLINDAGEM: Verifica se 'posts' é realmente um Array.
-  // Se for null, undefined ou um Objeto estranho, usa um array vazio [].
   const safePosts = Array.isArray(posts) ? posts : [];
 
+  // 2. Filtra os posts baseado na busca
   const filteredPosts = safePosts.filter((post) => {
-    // Verificação de segurança para posts sem título
     if (!post || !post.title) return false; 
-    
     return post.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  // 3. Lógica de Paginação (Fatia o array de posts filtrados)
+  const totalPaginas = Math.ceil(filteredPosts.length / CARDS_POR_PAGINA);
+  const indiceInicial = (paginaAtual - 1) * CARDS_POR_PAGINA;
+  const indiceFinal = indiceInicial + CARDS_POR_PAGINA;
+  
+  // Array final que vai de fato aparecer na tela
+  const postsDaPagina = filteredPosts.slice(indiceInicial, indiceFinal);
+
+  // 4. Função que lida com a digitação (E reseta a página para 1)
+  const handleBusca = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPaginaAtual(1); // Se o usuário pesquisar algo, sempre volta pra primeira página
+  };
 
   return (
     <>
@@ -29,7 +43,7 @@ export default function BlogList({ posts }: { posts: any[] }) {
           type="text"
           placeholder="Buscar artigos..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleBusca}
           style={{
             width: '100%',
             maxWidth: '500px',
@@ -45,10 +59,10 @@ export default function BlogList({ posts }: { posts: any[] }) {
         />
       </div>
 
-      {/* --- Grid de Posts (Filtrado) --- */}
-      {filteredPosts.length > 0 ? (
+      {/* --- Grid de Posts (Renderiza os posts fatiados) --- */}
+      {postsDaPagina.length > 0 ? (
         <div className="blog-grid">
-          {filteredPosts.map((post: any) => (
+          {postsDaPagina.map((post: any) => (
             <Link
               href={`/blog/${post.slug.current}`}
               key={post._id}
@@ -58,7 +72,6 @@ export default function BlogList({ posts }: { posts: any[] }) {
               {post.mainImage && (
                 <div style={{ position: 'relative', width: '100%', height: '200px' }}>
                   <Image
-                    // Aqui usamos o urlFor importado corretamente
                     src={urlFor(post.mainImage).url()}
                     alt={post.title}
                     fill
@@ -87,7 +100,7 @@ export default function BlogList({ posts }: { posts: any[] }) {
                       year: 'numeric',
                     })}
                   </span>
-                  <span style={{ color: 'var(--verde-main)', fontWeight: 700, fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--verde-main, #22c55e)', fontWeight: 700, fontSize: '0.9rem' }}>
                     Ler Mais &rarr;
                   </span>
                 </div>
@@ -98,6 +111,57 @@ export default function BlogList({ posts }: { posts: any[] }) {
       ) : (
         <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
           <p>Nenhum artigo encontrado para "{searchTerm}".</p>
+        </div>
+      )}
+
+      {/* --- Controles de Paginação --- */}
+      {totalPaginas > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          gap: '20px', 
+          marginTop: '50px' 
+        }}>
+          <button
+            onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
+            disabled={paginaAtual === 1}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              maxWidth: '200px',
+              backgroundColor: paginaAtual === 1 ? '#e2e8f0' : 'var(--verde-main, #22c55e)',
+              color: paginaAtual === 1 ? '#94a3b8' : '#fff',
+              cursor: paginaAtual === 1 ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            &larr; Anterior
+          </button>
+
+          <span style={{ color: '#475569', fontWeight: '500' }}>
+            Página {paginaAtual} de {totalPaginas}
+          </span>
+
+          <button
+            onClick={() => setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))}
+            disabled={paginaAtual === totalPaginas}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              maxWidth: '200px',
+              border: 'none',
+              backgroundColor: paginaAtual === totalPaginas ? '#e2e8f0' : 'var(--verde-main, #22c55e)',
+              color: paginaAtual === totalPaginas ? '#94a3b8' : '#fff',
+              cursor: paginaAtual === totalPaginas ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            Próxima &rarr;
+          </button>
         </div>
       )}
     </>

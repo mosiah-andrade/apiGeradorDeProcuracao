@@ -1,4 +1,4 @@
-import AdBannerMobile from '@/components/AdBannerMobile';
+
 import { PortableText } from '@portabletext/react';
 import { getPost, getPosts } from '../../lib/posts';
 import { urlFor } from '../../lib/sanity';
@@ -8,6 +8,8 @@ import ShareButtons from '@/components/ShareButtons';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import GroupAd from '@/components/GroupAd';
+import AdManager from '@/components/AdManager';
+
 
 // GERAÇÃO ESTÁTICA DAS PÁGINAS
 export async function generateStaticParams() {
@@ -29,17 +31,19 @@ const ptComponents = {
         return null;
       }
       return (
-        <div style={{ margin: '30px 0', width: '100%' }}>
+        <div style={{ margin: '30px 0', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Imagem do artigo'}
-            width={800}
-            height={500}
+            width={800} 
+            height={500} 
             style={{
-              display: 'flex',
+              display: 'block',
               margin: '0 auto',
-              width: '60%',
-              height: 'auto',
+              // AQUI ESTÁ A MÁGICA DO MOBILE:
+              width: '100%', // No celular, ocupa 100% da largura disponível
+              maxWidth: '700px', // No PC, ele não passa de 700px para não ficar gigante
+              height: 'auto', // Mantém a proporção da imagem
               objectFit: 'contain',
               borderRadius: '8px'
             }}
@@ -56,7 +60,7 @@ const ptComponents = {
   // --- ADICIONE ESTE BLOCO DE MARKS ABAIXO ---
   marks: {
     link: ({ children, value }: any) => {
-      // Se o campo "blank" estiver marcado no Sanity OU se for um link externo (começa com http)
+      // Se o campo "blank" estiver marcado no Sanity OU se for um link externo
       const isExternal = (value?.href || '').startsWith('http');
       const target = value?.blank || isExternal ? '_blank' : undefined;
       
@@ -64,12 +68,15 @@ const ptComponents = {
         <a 
           href={value?.href} 
           target={target} 
-          // Se abrir em nova aba, adiciona rel por segurança e SEO
           rel={target === '_blank' ? 'noopener noreferrer' : undefined}
           style={{
-            color: 'var(--verde-main, #22c55e)', // Usa sua cor principal ou um verde padrão
+            color: 'var(--verde-main, #22c55e)',
             textDecoration: 'underline',
-            fontWeight: '500'
+            fontWeight: '500',
+            // --- A MÁGICA ACONTECE AQUI ---
+            wordBreak: 'break-all', // Força o link a quebrar de linha
+            overflowWrap: 'anywhere', // Garantia extra para navegadores modernos
+            // ------------------------------
           }}
         >
           {children}
@@ -165,11 +172,14 @@ export default async function PostPage({ params }: Props) {
             <span>{new Date(post.publishedAt).toLocaleDateString('pt-BR')}</span>
           </div>
         </header>
-        <AdBannerMobile />
+       <div style={{ marginBottom: '40px' ,  width: '70%', margin: '0 auto'}}>
+        <AdManager />
+       </div>
+
         <div className="conteudo-site" >
           <PortableText value={post.body} components={ptComponents} />
         </div>
-        <AdBannerMobile />
+        <AdManager />
         {post.related && post.related.length > 0 && (
         <div style={{ marginTop: '80px', borderTop: '1px solid #e2e8f0', paddingTop: '40px' }}>
           <h3 style={{ fontSize: '1.5rem', marginBottom: '30px' }}>
