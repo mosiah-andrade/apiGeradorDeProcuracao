@@ -26,6 +26,7 @@ export default function Navbar() {
           <Link href="/" className={`nav-item ${pathname === '/' ? 'active-link' : ''}`}>Início</Link>
           <Link href="/blog" className={`nav-item ${pathname.includes('/blog') ? 'active-link' : ''}`}>Blog</Link>
           <Link href="/calculadora-solar" className={`nav-item ${pathname === '/calculadora-solar' ? 'active-link' : ''}`}>Calculadora</Link>
+          <Link href="/quem-somos" className={`nav-item ${pathname === '/quem-somos' ? 'active-link' : ''}`}>Sobre Nós</Link>
           <Link href="/declaracao-posse" className="nav-item-btn">
             Posse de Imóvel
           </Link>
@@ -53,6 +54,7 @@ export default function Navbar() {
           <Link href="/" className="nav-item py-2 border-b border-gray-800">Início</Link>
           <Link href="/blog" className="nav-item py-2 border-b border-gray-800">Blog</Link>
           <Link href="/calculadora-solar" className="nav-item py-2 border-b border-gray-800">Calculadora Solar</Link>
+          <Link href="/quem-somos" className="nav-item py-2 border-b border-gray-800">Sobre Nós</Link>
           <Link href="/declaracao-posse" className="nav-item py-4 text-center bg-green-600 rounded-lg font-bold text-white mt-2">
             Gerar Declaração de Posse
           </Link>

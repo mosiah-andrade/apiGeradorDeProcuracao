@@ -189,7 +189,10 @@ export default function DeclaracaoPosse() {
         </section>
 
         <div>
-          // anuncio
+          <p className="text-center text-gray-500 text-sm">
+            Anuncio
+          </p>
+
           <AdManager />
         </div>
         
@@ -207,7 +210,9 @@ export default function DeclaracaoPosse() {
         </section>
 
         <div>
-          // anuncio
+          <p className="text-center text-gray-500 text-sm">
+            Anuncio
+          </p>
           <AdManager />
         </div>
         

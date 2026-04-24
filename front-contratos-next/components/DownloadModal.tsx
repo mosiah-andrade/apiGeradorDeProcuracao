@@ -26,7 +26,9 @@ export default function DownloadModal({ isOpen, timeLeft, readyToDownload, onClo
         <div className="ad-container" style={{margin: '15px 0'}}>
            
           <div>
-            // anuncio
+            <p className="text-center text-gray-500 text-sm">
+              Anuncio
+            </p>
             <AdManager />
           </div>
         
