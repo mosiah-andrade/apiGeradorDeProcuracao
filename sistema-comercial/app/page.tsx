@@ -32,31 +32,6 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navbar Superior */}
-      <header className="bg-white border-b border-slate-100 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-        <div className="flex items-center gap-8">
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Asa<span className="text-blue-600">web</span>
-          </h1>
-          <nav className="hidden md:flex gap-6">
-            <Link href="/" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-1">Dashboard</Link>
-            <Link href="/proposta" className="text-slate-500 hover:text-slate-900 transition-colors">Propostas</Link>
-            <Link href="/clientes" className="text-slate-500 hover:text-slate-900 transition-colors">Clientes</Link>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-slate-900 leading-none">Olá, {nome.split(' ')[0]}</p>
-            <p className="text-xs text-slate-500 mt-1">{user.email}</p>
-          </div>
-          <form action="/auth/signout" method="post">
-            <button className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-all">
-              Sair
-            </button>
-          </form>
-        </div>
-      </header>
 
       {/* Conteúdo Principal */}
       <main className="p-8 max-w-7xl mx-auto">
@@ -86,9 +61,9 @@ export default async function HomePage() {
         {/* Grid de Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <MetricCard title="Propostas este mês" value={totalPropostas.toString()} trend={totalPropostas >= limite ? "Limite atingido" : ""} />
-          <MetricCard title="Aguardando Aceite" value="5" />
+          {/* <MetricCard title="Aguardando Aceite" value="5" />
           <MetricCard title="Vendas Fechadas" value="3" trend="+5%" />
-          <MetricCard title="Total em Orçamentos" value="R$ 145k" />
+          <MetricCard title="Total em Orçamentos" value="R$ 145k" /> */}
         </div>
 
         {/* Seção de Ação Rápida */}
@@ -115,9 +90,14 @@ export default async function HomePage() {
           <div className="bg-slate-900 rounded-2xl p-8 text-white">
             <h3 className="text-xl font-bold mb-4">Suporte Asaweb</h3>
             <p className="text-slate-400 text-sm mb-6">Dúvidas sobre cálculos de dimensionamento ou integração com o Supabase?</p>
-            <button className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all border border-white/10">
+            <a 
+              href="https://wa.me/558189289155" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all border border-white/10 text-center"
+            >
               Falar com suporte
-            </button>
+            </a>
           </div>
         </section>
       </main>

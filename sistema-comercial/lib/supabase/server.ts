@@ -1,9 +1,8 @@
-// lib/supabase/server.ts
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  const cookieStore = await cookies() // Se for Next.js 15, precisa do await
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,9 +18,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Este catch evita o erro quando o Supabase tenta 
-            // definir cookies dentro de um Server Component.
-            // A renovação real será feita pelo Middleware.
+            // O componente de servidor pode ignorar se for chamado em página estática
           }
         },
       },
