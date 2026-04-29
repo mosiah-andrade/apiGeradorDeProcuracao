@@ -25,3 +25,20 @@ export async function createClient() {
     }
   )
 }
+
+
+export async function getSubscriptionStatus() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('status')
+    .eq('user_id', user.id)
+    .eq('status', 'active') // Só queremos assinaturas ativas
+    .single();
+
+  return subscription?.status === 'active';
+}

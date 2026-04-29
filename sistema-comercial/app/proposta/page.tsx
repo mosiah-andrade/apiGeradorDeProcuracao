@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import DownloadButton from '../components/DownloadButton'
 import EmailButton from '../components/EmailButton'
+import ContadorPropostas from '@/app/components/ContadorPropostas'
 
 export default async function PropostasPage() {
   const supabase = await createClient()
@@ -31,6 +32,36 @@ if (error) {
   const totalInvestido = propostas?.reduce((acc, p) => acc + Number(p.valor_total), 0) || 0;
   const potenciaTotal = propostas?.reduce((acc, p) => acc + Number(p.potencia_kwp), 0) || 0;
 
+
+  // 1. DECLARAÇÃO ÚNICA: Definimos o tempo logo no início
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  // 2. BUSCA STATUS PRO
+  let isPro = false;
+  try {
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+
+    isPro = !!subscription;
+  } catch (error) {
+    isPro = false;
+  }
+
+  // 3. BUSCA CONTAGEM DE PROPOSTAS (Usando a variável única inicioMes)
+  const { count: propostasNoMes } = await supabase
+    .from('propostas')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', inicioMes.toISOString());
+
+  // 4. DEFINIÇÃO DE LIMITES
+  const limite = 10;
+  const totalPropostas = propostasNoMes || 0;
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -49,7 +80,11 @@ if (error) {
             href="/proposta/nova"
             className="inline-flex items-center justify-center bg-blue-600 text-white font-bold py-4 px-8 rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95 gap-2"
           >
-            <span className="text-xl">+</span> Nova Proposta Solar
+            {totalPropostas < limite || isPro ? (
+              <Link href="/proposta/nova"> + Gerar Proposta </Link>
+            ) : (
+              <div className="text-amber-600">Limite atingido!</div>
+            )}
           </Link>
         </header>
 
@@ -63,14 +98,11 @@ if (error) {
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Capacidade Total</p>
             <p className="text-2xl font-bold text-slate-900">{potenciaTotal.toFixed(2)} <span className="text-sm font-medium text-slate-400">kWp</span></p>
           </div>
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Uso do Plano</p>
-              <p className="text-2xl font-bold text-slate-900">{propostas?.length || 0} <span className="text-sm font-medium text-slate-400">/ 10</span></p>
-            </div>
-            <div className="w-12 h-12 rounded-full border-4 border-slate-100 border-t-blue-500 flex items-center justify-center text-[10px] font-bold">
-               {((propostas?.length || 0) / 10 * 100)}%
-            </div>
+          {/* Barra de Limite Mensal */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            
+            <ContadorPropostas isPro={isPro} count={propostasNoMes || 0}  />
+
           </div>
         </div>
 

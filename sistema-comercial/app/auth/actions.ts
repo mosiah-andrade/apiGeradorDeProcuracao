@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { gerarPdfProposta } from '@/lib/pdf-generator'
 import { resend } from '@/lib/mail'
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { stripe } from '@/lib/stripe'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -101,6 +103,24 @@ export async function criarProposta(prevState: any, formData: FormData) {
   
   if (!user) redirect('/login')
 
+  // === 0. VERIFICAÇÃO DE REGRA DE NEGÓCIO (LIMITES) ===
+  // Chamamos a função RPC que criamos no Supabase
+  const { data: canCreate, error: rpcError } = await supabase.rpc('can_user_create_proposta', { 
+    target_user_id: user.id 
+  });
+
+  if (rpcError) {
+    console.error("Erro ao verificar limites:", rpcError);
+    return { error: "Erro interno ao verificar permissões de uso." };
+  }
+
+  if (!canCreate) {
+    return { 
+      error: "Você atingiu o limite de 20 propostas mensais do plano gratuito. Faça upgrade para o PRO para uso ilimitado!" 
+    };
+  }
+  // ===================================================
+
   // 1. Coleta de Dados Básicos e Itens
   const cliente_name = formData.get('cliente') as string
   const cliente_email = formData.get('cliente_email') as string
@@ -108,7 +128,7 @@ export async function criarProposta(prevState: any, formData: FormData) {
   const valor_total = Number(formData.get('valor'))
   const itens_config = JSON.parse(formData.get('itens_lista') as string)
 
-  // 2. Coleta de Campos de Viabilidade Técnica (Novos)
+  // 2. Coleta de Campos de Viabilidade Técnica
   const consumo_mensal = Number(formData.get('consumo_mensal'))
   const geracao_estimada = Number(formData.get('geracao_estimada'))
   const payback_anos = Number(formData.get('payback_anos'))
@@ -136,13 +156,12 @@ export async function criarProposta(prevState: any, formData: FormData) {
       potencia: proposta.potencia_kwp,
       valor: proposta.valor_total,
       itens: itens_config,
-      // Dados de viabilidade para o PDF
       consumo_mensal,
       geracao_estimada,
       payback_anos
     })
+    
     const pdfBuffer = Buffer.from(pdf.output('arraybuffer'))
-
     const safeName = cliente_name.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_')
     const recipients = [user.email, cliente_email].filter(Boolean) as string[]
 
@@ -171,11 +190,13 @@ export async function criarProposta(prevState: any, formData: FormData) {
     })
   } catch (err) {
     console.error("Falha na automação de e-mail/PDF:", err)
+    // Opcional: retornar sucesso mesmo se o e-mail falhar, pois o banco já foi salvo
   }
 
   revalidatePath('/')
   return { success: true }
 }
+
 
 export async function reenviarEmailProposta(propostaId: string) {
   const supabase = await createClient();
@@ -255,4 +276,57 @@ export async function updateProfile(prevState: any, formData: FormData) {
   revalidatePath('/perfil');
   return { success: true };
 }
+export async function checkoutAction(formData: FormData) {
+  const supabase = await createClient(); //
+  const { data: { user } } = await supabase.auth.getUser();
 
+  if (!user) redirect('/login');
+
+  const priceId = formData.get('priceId') as string;
+
+  const session = await stripe.checkout.sessions.create({
+    customer_email: user.email,
+    line_items: [{ price: priceId, quantity: 1 }],
+    mode: 'subscription',
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/proposta?success=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/proposta?canceled=true`,
+    metadata: { 
+      userId: user.id // Vínculo crucial para as tabelas 'profiles' e 'subscriptions'
+    },
+  });
+
+  redirect(session.url!);
+}
+
+// Adicione em app/auth/actions.ts
+export async function syncStripeProducts() {
+  const products = await stripe.products.list();
+  
+  for (const product of products.data) {
+    // Upsert no Produto
+    await supabaseAdmin.from('products').upsert({
+      id: product.id,
+      active: product.active,
+      name: product.name,
+      description: product.description,
+      image: product.images[0] || null,
+      metadata: product.metadata,
+    });
+
+    // Busca e Upsert nos Preços deste produto
+    const prices = await stripe.prices.list({ product: product.id });
+    for (const price of prices.data) {
+      await supabaseAdmin.from('prices').upsert({
+        id: price.id,
+        product_id: price.product as string,
+        active: price.active,
+        currency: price.currency,
+        type: price.type,
+        unit_amount: price.unit_amount,
+        interval: price.recurring?.interval,
+        interval_count: price.recurring?.interval_count,
+        metadata: price.metadata,
+      });
+    }
+  }
+}

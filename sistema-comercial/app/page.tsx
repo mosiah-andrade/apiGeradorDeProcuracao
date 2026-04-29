@@ -1,33 +1,47 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import ContadorPropostas from '@/app/components/ContadorPropostas'
+
+
 
 export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
 
-  // Se não estiver logado, o middleware já deve tratar, 
-  // mas reforçamos aqui para evitar erros de renderização.
   if (!user) {
     redirect('/login')
   }
-  const nome = user.user_metadata.full_name
 
-
-  // Buscar propostas do mês atual
+  // 1. DECLARAÇÃO ÚNICA: Definimos o tempo logo no início
   const inicioMes = new Date();
   inicioMes.setDate(1);
-  inicioMes.setHours(0,0,0,0);
+  inicioMes.setHours(0, 0, 0, 0);
 
-  const { count: propostasMes } = await supabase
+  // 2. BUSCA STATUS PRO
+  let isPro = false;
+  try {
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+
+    isPro = !!subscription;
+  } catch (error) {
+    isPro = false;
+  }
+
+  // 3. BUSCA CONTAGEM DE PROPOSTAS (Usando a variável única inicioMes)
+  const { count: propostasNoMes } = await supabase
     .from('propostas')
     .select('*', { count: 'exact', head: true })
-    .gte('created_at', inicioMes.toISOString())
+    .eq('user_id', user.id)
+    .gte('created_at', inicioMes.toISOString());
 
-  const limite = 10
-  const totalPropostas = propostasMes || 0
-  const porcentagemUso = (totalPropostas / limite) * 100
+  // 4. DEFINIÇÃO DE LIMITES
+  const limite = 10;
+  const totalPropostas = propostasNoMes || 0;
 
 
   return (
@@ -42,20 +56,7 @@ export default async function HomePage() {
           </div>
           
           {/* Barra de Limite Mensal */}
-          <div className="w-64">
-            <div className="flex justify-between text-xs mb-1 font-bold">
-              <span className="text-slate-600 uppercase">Uso do Plano</span>
-              <span className={totalPropostas >= limite ? "text-red-600" : "text-blue-600"}>
-                {totalPropostas}/{limite}
-              </span>
-            </div>
-            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-500 ${totalPropostas >= limite ? 'bg-red-500' : 'bg-blue-600'}`}
-                style={{ width: `${Math.min(porcentagemUso, 100)}%` }}
-              ></div>
-            </div>
-          </div>
+          <ContadorPropostas isPro={isPro} count={propostasNoMes || 0}  />
         </header>
 
         {/* Grid de Métricas */}
