@@ -130,7 +130,7 @@ export async function criarProposta(prevState: any, formData: FormData) {
 
   // 4. Automação de PDF e E-mail
   try {
-    const pdfBuffer = await gerarPdfProposta({
+    const pdf = await gerarPdfProposta({
       id: proposta.id,
       cliente: proposta.cliente_name,
       potencia: proposta.potencia_kwp,
@@ -141,6 +141,7 @@ export async function criarProposta(prevState: any, formData: FormData) {
       geracao_estimada,
       payback_anos
     })
+    const pdfBuffer = Buffer.from(pdf.output('arraybuffer'))
 
     const safeName = cliente_name.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_')
     const recipients = [user.email, cliente_email].filter(Boolean) as string[]
@@ -190,7 +191,8 @@ export async function reenviarEmailProposta(propostaId: string) {
   .eq('id', user.id)
   .single();
 
-  const pdfBuffer = await gerarPdfProposta(proposta, perfil);
+  const pdf = await gerarPdfProposta(proposta, perfil);
+  const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
 
   // Correção da lógica 'to' (anteriormente usava &&, o que era um erro)
   const recipients = [user.email].filter(Boolean) as string[];
@@ -253,3 +255,4 @@ export async function updateProfile(prevState: any, formData: FormData) {
   revalidatePath('/perfil');
   return { success: true };
 }
+

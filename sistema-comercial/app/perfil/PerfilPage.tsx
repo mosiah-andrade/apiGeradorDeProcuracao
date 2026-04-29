@@ -4,6 +4,8 @@ import { updateProfile } from '@/app/auth/actions'
 import { useActionState, useState, useEffect } from 'react'
 import AvatarUpload from '@/app/components/AvatarUpload'
 import { toast } from 'sonner'
+import Link from 'next/link'
+
 
 export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
   const [avatarUrl, setAvatarUrl] = useState(perfilInicial?.avatar_url || '')
@@ -125,6 +127,12 @@ export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
                 </button>
               </div>
             )}
+
+            <Link href="/planos" className="block mt-6 text-center">
+              <p className="mt-4 text-center text-sm text-blue-600 hover:underline cursor-pointer transition-colors ">
+                contratar um plano para desbloquear mais recursos e personalizações! 🚀
+              </p>
+            </Link>
           </form>
         </div>
       </div>
