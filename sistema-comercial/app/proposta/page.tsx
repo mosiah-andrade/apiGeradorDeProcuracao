@@ -39,18 +39,15 @@ if (error) {
   inicioMes.setHours(0, 0, 0, 0);
 
   // 2. BUSCA STATUS PRO
-  let isPro = false;
-  try {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+  const { data: subscription } = await supabase
+  .from('subscriptions')
+  .select('status')
+  .eq('user_id', user.id)
+  .eq('status', 'active')
+  .is('ended_at', null) // Garante que só pega as que NÃO expiraram
+  .maybeSingle();
 
-    isPro = !!subscription;
-  } catch (error) {
-    isPro = false;
-  }
+  const isPro = !!subscription; 
 
   // 3. BUSCA CONTAGEM DE PROPOSTAS (Usando a variável única inicioMes)
   const { count: propostasNoMes } = await supabase
@@ -77,13 +74,14 @@ if (error) {
           </div>
 
           <Link
-            href="/proposta/nova"
+            href={totalPropostas < limite || isPro ? "/proposta/nova" : "/planos"}
             className="inline-flex items-center justify-center bg-blue-600 text-white font-bold py-4 px-8 rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95 gap-2"
           >
+            {/* 2. Aqui dentro usamos apenas lógica de texto, sem tags <a> ou <Link> */}
             {totalPropostas < limite || isPro ? (
-              <Link href="/proposta/nova"> + Gerar Proposta </Link>
+              <span> + Gerar Proposta </span>
             ) : (
-              <div className="text-amber-600">Limite atingido!</div>
+              <span className="text-amber-200"> Limite atingido! Faça Upgrade </span>
             )}
           </Link>
         </header>

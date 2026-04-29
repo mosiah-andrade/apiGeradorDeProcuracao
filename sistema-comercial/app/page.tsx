@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ContadorPropostas from '@/app/components/ContadorPropostas'
 
-
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -18,19 +18,17 @@ export default async function HomePage() {
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
 
-  // 2. BUSCA STATUS PRO
-  let isPro = false;
-  try {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+  const { data: subscription, error } = await supabase
+  .from('subscriptions')
+  .select('status')
+  .eq('user_id', user.id)
+  .eq('status', 'active')
+  .maybeSingle(); // Retorna o objeto ou null se não existir
 
-    isPro = !!subscription;
-  } catch (error) {
-    isPro = false;
-  }
+// 2. Define a variável isPro de forma segura
+// Se houver dados (subscription não é null), isPro será true
+const isPro = !!subscription; 
+
 
   // 3. BUSCA CONTAGEM DE PROPOSTAS (Usando a variável única inicioMes)
   const { count: propostasNoMes } = await supabase

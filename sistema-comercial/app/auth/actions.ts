@@ -276,29 +276,65 @@ export async function updateProfile(prevState: any, formData: FormData) {
   revalidatePath('/perfil');
   return { success: true };
 }
+
 export async function checkoutAction(formData: FormData) {
-  const supabase = await createClient(); //
+  console.log("1. Action disparada!");
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect('/login');
 
+  // 1. Coletar o ID do Preço vindo do formulário
   const priceId = formData.get('priceId') as string;
+  console.log("2. ID capturado:", priceId);
+  if (!priceId) {
+    throw new Error("ID do preço não encontrado.");
+  }
 
+  // 2. TRAVA DE SEGURANÇA: Verificar se já existe assinatura ativa
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (sub) {
+    // Em vez de throw, podemos redirecionar para o dashboard para uma melhor UX
+    
+    redirect('/?error=ja_assinante');
+  }
+
+  // 3. Criar a Sessão de Checkout no Stripe
   const session = await stripe.checkout.sessions.create({
     customer_email: user.email,
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
     mode: 'subscription',
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/proposta?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/proposta?canceled=true`,
-    metadata: { 
-      userId: user.id // Vínculo crucial para as tabelas 'profiles' e 'subscriptions'
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?success=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/planos`,
+    metadata: {
+      userId: user.id, // ESSENCIAL para o seu Webhook funcionar
     },
   });
 
-  redirect(session.url!);
+
+  revalidatePath('/'); // Limpa o cache da home
+
+
+  // 4. REDIRECIONAR O USUÁRIO PARA O STRIPE
+  if (session.url) {
+    console.log("3. Tentando redirecionar para o Stripe...");
+    redirect(session.url);
+  } else {
+    throw new Error("Erro ao criar sessão de checkout.");
+  }
 }
 
-// Adicione em app/auth/actions.ts
 export async function syncStripeProducts() {
   const products = await stripe.products.list();
   
@@ -330,3 +366,48 @@ export async function syncStripeProducts() {
     }
   }
 }
+
+
+export async function createCustomerPortal() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('stripe_customer_id')
+    .eq('id', user.id)
+    .single();
+
+  // Se ele nem tem ID, manda contratar um plano
+  if (!profile?.stripe_customer_id) {
+    redirect('/planos');
+  }
+
+  try {
+    // Tenta gerar o link para o portal
+    const session = await stripe.billingPortal.sessions.create({
+      customer: profile.stripe_customer_id,
+      return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/perfil`, 
+    });
+
+    redirect(session.url);
+  } catch (error: any) {
+    // SE O ERRO FOR "No such customer", limpamos o ID errado do banco
+    if (error.raw?.code === 'resource_missing' || error.message.includes('No such customer')) {
+      console.warn("Cliente Stripe não encontrado. Limpando ID inválido do banco.");
+      
+      await supabase
+        .from('profiles')
+        .update({ stripe_customer_id: null })
+        .eq('id', user.id);
+        
+      redirect('/planos?error=sessao_expirada');
+    }
+
+    console.error("Erro ao criar portal:", error);
+    throw error;
+  }
+}
+
+

@@ -27,7 +27,7 @@ export default function ContadorPropostas({ isPro, count, limit = 10 }: Contador
   const isCritico = count >= limit * 0.8 // Fica vermelho em 80% do uso
 
   return (
-    <div className="flex items-center gap-4 bg-white p-2 pr-4 rounded-2xl border border-slate-100 shadow-sm">
+    <div className="flex items-center gap-4 p-2 pr-4  ">
       <div className="hidden sm:block text-right">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Uso Mensal</p>
         <p className="text-sm font-black text-slate-700">

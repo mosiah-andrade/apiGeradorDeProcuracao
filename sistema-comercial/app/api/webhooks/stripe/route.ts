@@ -59,28 +59,19 @@ export async function POST(req: Request) {
 
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted': {
-      const subscription = data.object as any;
+    const subscription = data.object as any;
+    
+    // Remove ou atualiza o status para 'canceled' no banco
+    await supabaseAdmin
+      .from('subscriptions')
+      .update({ 
+        status: 'canceled',
+        price_id: null // Opcional: remover o vínculo com o preço
+      })
+      .eq('id', subscription.id);
       
-      // Procurar o user_id pelo stripe_customer_id guardado no perfil
-      const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('stripe_customer_id', subscription.customer as string)
-        .single();
-
-      if (profile) {
-        await supabaseAdmin.from('subscriptions').upsert({
-          id: subscription.id,
-          user_id: profile.id,
-          status: subscription.status,
-          price_id: subscription.items.data[0].price.id,
-          cancel_at_period_end: subscription.cancel_at_period_end,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        });
-      }
-      break;
-    }
+    break;
+  }
   }
 } catch (error: any) {
   console.error('Falha Crítica no Webhook:', error.message);
