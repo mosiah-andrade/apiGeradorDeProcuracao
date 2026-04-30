@@ -2,6 +2,7 @@ import { checkoutAction } from '@/app/auth/actions';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Check, Zap, Star } from 'lucide-react'; // Instale lucide-react ou use emojis
+import CheckoutButton from '@/app/components/CheckoutButton';
 
 const planos = [
   {
@@ -105,17 +106,7 @@ export default async function PlanosPage() {
               ) : (
                 <form action={checkoutAction}>
                   <input type="hidden" name="priceId" value={plano.id} />
-                  <button 
-                    type="submit" 
-                    className={`group w-full py-5 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                      plano.popular 
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-900/20' 
-                      : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200'
-                    }`}
-                  >
-                    {plano.popular ? <Zap size={18} fill="currentColor" /> : <Star size={18} />}
-                    Assinar Agora
-                  </button>
+                  <CheckoutButton popular={plano.popular} planoNome={plano.nome} />
                 </form>
               )}
             </div>

@@ -14,26 +14,28 @@ export default function EmailButton({ propostaId }: { propostaId: string }) {
     toast("Deseja reenviar esta proposta por e-mail?", {
       action: {
         label: 'Enviar',
-        onClick: () => reenviarEmailProposta(propostaId) // Sua função de envio aqui
+        onClick: async () => {
+          // Toda a lógica de envio vem para DENTRO do onClick
+          setEnviando(true);
+          try {
+            const result = await reenviarEmailProposta(propostaId);
+            if (result.success) {
+              toast.success("E-mail enviado com sucesso!");
+            }
+          } catch (error) {
+            console.error(error);
+            toast.error("Erro ao conectar com o servidor de e-mail.");
+          } finally {
+            setEnviando(false);
+          }
+        }
       },
       cancel: {
         label: 'Cancelar',
-        onClick: () => console.log('Cancelado')
+        onClick: () => console.log('Envio cancelado pelo usuário')
       },
-    });;
+    });
 
-    setEnviando(true)
-    try {
-      const result = await reenviarEmailProposta(propostaId)
-      if (result.success) {
-        toast.success("E-mail enviado com sucesso!")
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao conectar com o servidor de e-mail.");
-    } finally {
-      setEnviando(false)
-    }
   }
 
   return (
@@ -41,9 +43,10 @@ export default function EmailButton({ propostaId }: { propostaId: string }) {
       onClick={handleSend}
       disabled={enviando}
       type="button"
-      className="text-slate-400 hover:text-emerald-600 p-2 rounded-lg hover:bg-emerald-50 transition-all disabled:opacity-50 cursor-pointer z-50"
+      className="text-blue-400 hover:text-blue-600 p-2 rounded-lg bg-blue-50 hover:bg-blue-200 transition-all flex-col  cursor-pointer z-50 "
     >
       {enviando ? <span className="animate-pulse">⏳</span> : '📧'}
+      <p className="text-sm font-medium">{enviando ? 'Enviando...' : 'Reenviar'}</p>
     </button>
   )
 }

@@ -2,6 +2,7 @@
 
 import { gerarPdfProposta } from '@/lib/pdf-generator'
 import { toast } from 'sonner'
+import { sendGAEvent } from '@next/third-parties/google'
 
 interface ItemProposta {
   descricao: string;
@@ -36,7 +37,9 @@ export default function DownloadButton({ proposta, perfil }: { proposta: Propost
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    sendGAEvent({ event: 'download_pdf', value: proposta.valor_total });
+
     try {
       toast.info("Gerando proposta técnica...");
 
@@ -89,10 +92,12 @@ export default function DownloadButton({ proposta, perfil }: { proposta: Propost
   return (
     <button 
       onClick={handleDownload}
-      className="text-slate-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-all flex items-center justify-center cursor-pointer z-50"
+      className="text-blue-400 hover:text-blue-600 p-2 rounded-lg bg-blue-50 hover:bg-blue-200 transition-all flex-col  cursor-pointer z-50 "
       type="button"
     >
+
       <span className="text-lg">📄</span>
+      <p className="text-sm font-medium">Download</p>
     </button>
   );
 }

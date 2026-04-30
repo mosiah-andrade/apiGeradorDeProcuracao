@@ -6,6 +6,7 @@ import AnaliseTecnica from './AnaliseTecnica'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ContadorPropostas from '@/app/components/ContadorPropostas'
+import { sendGAEvent } from '@next/third-parties/google'
 
 interface ItemProposta {
   descricao: string;
@@ -44,8 +45,11 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
   const valorTotalCalculado = itens.reduce((acc, item) => acc + (item.quantidade * item.valorUnitario), 0)
 
   useEffect(() => {
-    if (state?.success) router.push('/')
-  }, [state, router])
+    if (state?.success){
+      sendGAEvent({ event: 'generate_proposal', value: valorTotalCalculado });
+       router.push('/')
+    }
+  }, [state, router, valorTotalCalculado])
 
   const removerItem = (index: number) => {
     if (itens.length > 1) {

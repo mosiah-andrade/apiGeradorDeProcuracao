@@ -56,14 +56,7 @@ export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
             <h1 className="text-xl font-bold text-slate-900">Configurações</h1>
           </div>
 
-          {!isEditing && (
-            <button 
-              onClick={() => setIsEditing(true)}
-              className="bg-white border border-slate-200 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 hover:shadow-md transition-all flex items-center gap-2 active:scale-95"
-            >
-              ✏️ Editar Perfil
-            </button>
-          )}
+          
         </div>
       </div>
 
@@ -130,6 +123,14 @@ export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
               </div>
             )}
           </form>
+          {!isEditing && (
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="ml-auto mr-8 mb-8 bg-white border border-slate-200 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 hover:shadow-md transition-all flex items-center gap-2 active:scale-95 cursor-pointer "
+            >
+              ✏️ Editar Perfil
+            </button>
+          )}
         </div>
 
         {/* Card de Assinatura - Contexto Separado */}

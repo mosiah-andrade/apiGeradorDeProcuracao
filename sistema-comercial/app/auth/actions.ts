@@ -68,10 +68,11 @@ export async function signUp(formData: FormData) {
 export async function resetPassword(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get('email') as string;
-
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     // Essa é a página que o usuário cairá depois de clicar no e-mail
-    redirectTo: `http://localhost:3000/auth/reset-password/confirm`,
+    redirectTo: `${siteUrl}/auth/reset-password/confirm`,
   });
 
   if (error) {

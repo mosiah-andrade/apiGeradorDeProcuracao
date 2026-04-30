@@ -15,7 +15,7 @@ export default async function Navbar() {
 
   const nome = perfilInicial?.full_name || "Usuário"
   const email = user.email
-  const avatar = user.user_metadata.avatar_url
+  const avatar = perfilInicial?.avatar_url
   console.log(user)
 
   return (

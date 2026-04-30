@@ -44,7 +44,6 @@ if (error) {
   .select('status')
   .eq('user_id', user.id)
   .eq('status', 'active')
-  .is('ended_at', null) // Garante que só pega as que NÃO expiraram
   .maybeSingle();
 
   const isPro = !!subscription; 

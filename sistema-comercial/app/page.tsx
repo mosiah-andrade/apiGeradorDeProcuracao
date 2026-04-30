@@ -59,7 +59,7 @@ const isPro = !!subscription;
 
         {/* Grid de Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <MetricCard title="Propostas este mês" value={totalPropostas.toString()} trend={totalPropostas >= limite ? "Limite atingido" : ""} />
+          <MetricCard title="Propostas este mês" value={totalPropostas.toString()} trend={totalPropostas >= limite && !isPro ? "Limite atingido" : ""} />
           {/* <MetricCard title="Aguardando Aceite" value="5" />
           <MetricCard title="Vendas Fechadas" value="3" trend="+5%" />
           <MetricCard title="Total em Orçamentos" value="R$ 145k" /> */}
@@ -71,7 +71,7 @@ const isPro = !!subscription;
             <div>
               <h3 className="text-xl font-bold text-slate-900 mb-4">Nova Proposta Técnica</h3>
               <p className="text-slate-500 mb-6">Crie orçamentos detalhados com cálculos de ROI e Payback para seus clientes em poucos minutos.</p>
-              {totalPropostas < limite ? (
+              {totalPropostas < limite || isPro ? (
                 <Link 
                   href="/proposta/nova" 
                   className="inline-flex bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition-all"
