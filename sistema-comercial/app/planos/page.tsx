@@ -21,7 +21,7 @@ type Plano = {
 // 2. Adicione ": Plano[]" logo após a palavra "planos"
 const planos: Plano[] = [
   {
-    id: 'price_1TRxoCKYK4FcLMhyDgJWmvzU',
+    id: 'price_1TRyCA3yIGi4BmgaokzbJUGU',
     nome: 'Plano Mensal',
     precoOriginal: '49,90',
     descontoTag: '50% OFF',
