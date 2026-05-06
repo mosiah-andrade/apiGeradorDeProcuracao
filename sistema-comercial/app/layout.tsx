@@ -36,7 +36,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Navbar />
-        <Toaster position="top-right" richColors /> {/* Adicione aqui */}
+        <Toaster 
+          position="top-center" 
+          richColors 
+          closeButton 
+          expand={true} 
+          theme="light" 
+        />
         <Suspense>
           <ToastHandler />
         </Suspense>
