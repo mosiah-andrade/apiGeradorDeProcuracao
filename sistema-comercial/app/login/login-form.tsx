@@ -9,17 +9,7 @@ export default function LoginForm({ error, message }: { error?: string; message?
       <h2 className="text-xl font-semibold text-slate-800 mb-6">Acesse sua conta</h2>
 
       <form action={login} className="space-y-5">
-        {/* Mensagens de Feedback */}
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
-            {error}
-          </div>
-        )}
-        {message && (
-          <div className="bg-blue-50 text-blue-600 p-3 rounded-lg text-sm border border-blue-100">
-            {message}
-          </div>
-        )}
+        
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>

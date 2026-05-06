@@ -5,6 +5,8 @@ import Navbar from "./components/navbar";
 import { Toaster } from 'sonner'
 import Link from 'next/link';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import ToastHandler from "./components/ToastHandler";
+import { Suspense } from 'react'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +37,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Navbar />
         <Toaster position="top-right" richColors /> {/* Adicione aqui */}
+        <Suspense>
+          <ToastHandler />
+        </Suspense>
         {children}
         <footer className="py-8 text-center text-xs text-slate-400">
           <p>&copy; {new Date().getFullYear()} Asaweb.tech. Todos os direitos reservados.</p>
