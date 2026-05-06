@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Check, Zap, Star } from 'lucide-react';
 import Link from 'next/link';
 import CheckoutButton from '@/app/components/CheckoutButton';
+import { formatarMoeda } from '@/lib/utils';
 
 // 1. Crie este molde (Type)
 type Plano = {
@@ -95,7 +96,7 @@ export default async function PlanosPage() {
                 {plano.precoOriginal && (
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`text-sm font-medium line-through ${plano.popular ? 'text-slate-500' : 'text-slate-400'}`}>
-                      R$ {plano.precoOriginal}
+                     {formatarMoeda(parseFloat(plano.precoOriginal))}
                     </span>
                     {plano.descontoTag && (
                       <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -107,14 +108,13 @@ export default async function PlanosPage() {
                 
                 {/* PREÇO ATUAL */}
                 <div className="flex items-baseline gap-1">
-                  <span className="text-sm font-bold">R$</span>
-                  <span className="text-5xl font-black tracking-tight">{plano.preco}</span>
+                  <span className="text-5xl font-black tracking-tight">{formatarMoeda(parseFloat(plano.preco))}</span>
                   <span className={`text-sm ${plano.popular ? 'text-slate-400' : 'text-slate-500'}`}>/mês</span>
                 </div>
                 
                 {plano.precoTotal && (
                   <p className="text-blue-400 text-xs font-bold mt-2 italic">
-                    Faturado R$ {plano.precoTotal} anualmente
+                    Faturado {formatarMoeda(parseFloat(plano.precoTotal))} anualmente
                   </p>
                 )}
               </div>

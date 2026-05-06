@@ -31,6 +31,20 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
     { descricao: 'Kit Solar Fotovoltaico Profissional', quantidade: 1, valorUnitario: 0 }
   ])
 
+  // Função para formatar o número para exibição no Input (BRL)
+  const formatarMoedaInput = (valor: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(valor);
+  };
+
+  // Função para converter a string do input de volta para número puro
+  const parseMoedaParaNumero = (valor: string) => {
+    const apenasNumeros = valor.replace(/\D/g, "");
+    return parseFloat(apenasNumeros) / 100;
+  };
+
   const handleCalculoFinalizado = (dados: any) => {
     setConsumo(dados.calculo.consumo)
     setGeracao(Math.round(dados.calculo.geracaoMensalMedia))
@@ -70,7 +84,7 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
           <ContadorPropostas isPro={isPro} count={propostasNoMes} />
         </div>
 
-        {/* Componente da NASA */}
+        {/* Componente Técnico */}
         <AnaliseTecnica onCalcular={handleCalculoFinalizado} />
 
         {/* Formulário Principal */}
@@ -81,6 +95,7 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
           </div>
 
           <form action={formAction} className="p-6 space-y-8">
+            {/* Inputs ocultos para enviar ao servidor */}
             <input type="hidden" name="itens_lista" value={JSON.stringify(itens)} />
             <input type="hidden" name="valor" value={valorTotalCalculado} />
             <input type="hidden" name="potencia" value={potencia} />
@@ -105,7 +120,6 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
                 <input 
                   name="cliente_email" 
                   type="email" 
-                  required 
                   placeholder="cliente@email.com"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-300" 
                 />
@@ -153,13 +167,15 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
                       />
                     </div>
                     <div className="col-span-6 md:col-span-3 flex items-center border-l border-slate-200 pl-3">
-                      <span className="text-[10px] font-bold text-slate-400 mr-2">R$</span>
                       <input 
                         className="w-full bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-slate-700" 
-                        type="number" 
-                        value={item.valorUnitario} 
+                        type="text" 
+                        value={formatarMoedaInput(item.valorUnitario)} 
                         onChange={e => {
-                          const next = [...itens]; next[idx].valorUnitario = Number(e.target.value); setItens(next);
+                          const valorNumerico = parseMoedaParaNumero(e.target.value);
+                          const next = [...itens]; 
+                          next[idx].valorUnitario = valorNumerico; 
+                          setItens(next);
                         }} 
                       />
                     </div>
@@ -177,12 +193,9 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
               </div>
             </div>
 
-            {/* Resumo de Viabilidade Estilizado */}
+            {/* Resumo de Viabilidade */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-3 bg-slate-900 rounded-3xl p-6 text-white grid grid-cols-3 gap-4 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                   <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3L8 7l4 4V7zm0 10v4l4-4-4-4v4z"/></svg>
-                </div>
                 <div className="z-10">
                   <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Potência</p>
                   <p className="text-xl font-bold">{potencia} <span className="text-xs font-normal text-slate-500">kWp</span></p>
@@ -214,12 +227,7 @@ export default function NovaPropostaPage({ isPro = false, propostasNoMes = 0 }: 
                 : 'bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 active:scale-95 shadow-blue-200'
               }`}
             >
-              {isPending ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  Processando...
-                </span>
-              ) : 'Gerar Proposta Profissional'}
+              {isPending ? 'Processando...' : 'Gerar Proposta Profissional'}
             </button>
           </form>
         </div>
