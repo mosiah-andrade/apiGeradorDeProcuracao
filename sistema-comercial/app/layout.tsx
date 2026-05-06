@@ -41,6 +41,7 @@ export default function RootLayout({
           <div className="flex justify-center gap-4 mt-2">
             <Link href="/termos" className="hover:text-blue-600">Termos de Uso</Link>
             <Link href="/privacidade" className="hover:text-blue-600">Política de Privacidade</Link>
+            <Link href="https://wa.me/558189289155" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">Contato</Link>
           </div>
         </footer>
         <GoogleAnalytics gaId="G-BLV25S4PX9" />
