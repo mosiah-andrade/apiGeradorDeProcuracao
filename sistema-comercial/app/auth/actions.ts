@@ -101,11 +101,12 @@ export async function updatePassword(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/auth/reset-password/confirm?error=${error.message}`);
+    // Redireciona de volta com o erro amigável
+    redirect(`/auth/reset-password/confirm?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Sucesso! Redireciona para o dashboard já logado
-  redirect('/message=Senha atualizada com sucesso');
+  // CORREÇÃO: Adicionada a barra antes de 'message' para uma rota válida
+  redirect('/?message=Senha atualizada com sucesso');
 }
 
 export async function criarProposta(prevState: any, formData: FormData) {

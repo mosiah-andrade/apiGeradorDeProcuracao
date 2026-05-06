@@ -4,9 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   })
 
   const supabase = createServerClient(
@@ -29,18 +27,23 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Importante: use getUser() para validar a sessão no servidor com segurança
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Definimos quais rotas o público geral PODE acessar sem login
-  const publicRoutes = ['/login', '/register', '/planos', '/lp', '/lp2', '/termos', '/privacidade', '/forgot-password', '/auth/reset-password/confirm'];
-  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
+  const publicRoutes = [
+    '/login', 
+    '/register', 
+    '/forgot-password', 
+    '/auth/reset-password/confirm',
+    '/auth/callback' // Adicionado para garantir o fluxo de autenticação
+  ];
+  
+  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
-  // 2. Se NÃO estiver logado e tentar acessar uma rota restrita (como dashboard e propostas)
   if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 3. Se ESTIVER logado e tentar acessar as páginas de login/cadastro, manda de volta pro dashboard
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
@@ -50,6 +53,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|auth/verificar-email|login|register|auth/callback).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

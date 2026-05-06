@@ -1,6 +1,20 @@
+'use client'
+
 import { updatePassword } from '@/app/auth/actions'
+import { useSearchParams } from 'next/navigation'
 
 export default function ResetPasswordConfirmPage() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
+
+  if (error === 'User from sub claim in JWT does not exist') {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100">
+        <p className="font-bold">Link Inválido ou Expirado</p>
+        <p className="text-xs">Não encontramos um usuário para este link. Por favor, solicite uma nova senha.</p>
+      </div>
+    );
+  }
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md">
