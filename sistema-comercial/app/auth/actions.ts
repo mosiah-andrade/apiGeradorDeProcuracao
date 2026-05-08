@@ -39,39 +39,37 @@ export async function signUp(prevState: any, formData: FormData) {
     email,
     password,
     options: {
-      data: {
-        full_name: fullName,
-      },
+      data: { full_name: fullName },
       emailRedirectTo: 'https://app.asaweb.tech/auth/callback',
     }
   })
 
-  // 1. Tratamento de Erros
-  if (error) {
-    if (error.message.includes('already registered')) {
-      return { error: 'Este e-mail já está cadastrado.' }
-    }
-    return { error: error.message }
+  if (error) return { error: error.message }
+
+  // --- O PULO DO GATO ---
+  // Se identities for vazio, o usuário já existia no banco do Supabase
+  const isNewUser = data.user?.identities && data.user.identities.length > 0
+
+  if (!isNewUser) {
+    // Aqui paramos a execução. 
+    // O Supabase NÃO enviará o link de confirmação 
+    // E nós NÃO enviaremos o e-mail de boas-vindas.
+    return { error: 'Este e-mail já está cadastrado. Tente fazer login ou recuperar a senha.' }
   }
 
-  // 2. Ações disparadas após criação bem-sucedida (Boas-vindas)
+  // Se chegou aqui, o usuário é realmente novo
   if (data?.user) {
     try {
-      // Disparamos o e-mail de marketing/boas-vindas antes de qualquer redirecionamento
       await sendWelcomeEmail(email, fullName)
     } catch (e) {
       console.error("Falha ao disparar e-mail de boas-vindas:", e)
-      // Seguimos em frente para não frustrar o usuário por um erro de SMTP
     }
   }
 
-  // 3. Lógica de Redirecionamento Baseada na Sessão
-  // Se a confirmação de e-mail estiver ativa no Supabase, data.session será null
   if (data.user && !data.session) {
     redirect('/auth/verificar-email')
   }
 
-  // Se a confirmação estiver desativada, ele cai aqui e vai para a home
   redirect('/')
 }
 
