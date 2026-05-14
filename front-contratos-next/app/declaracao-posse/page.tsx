@@ -21,7 +21,6 @@ export default function DeclaracaoPosse() {
     rg_proprietario: '',
     endereco: '',
     complemento: '',
-    inicio_permanencia: '',
     nome_documento: 'Declaração de Posse',
     cidade: ''
   });
@@ -69,7 +68,6 @@ export default function DeclaracaoPosse() {
       "RG-proprietario": formData.rg_proprietario,
       Endereco: formData.endereco,
       Complemento: formData.complemento,
-      Inicio_permanencia: formData.inicio_permanencia,
       Nome_documento: formData.nome_documento,
       Cidade: formData.cidade,
       Dia: dataHoje.getDate().toString(),
@@ -146,11 +144,6 @@ export default function DeclaracaoPosse() {
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-700 mb-1">Complemento</label>
           <input type="text" name="complemento" value={formData.complemento} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Bloco 1, Ap. 101" required />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Início da Permanência</label>
-          <input type="text" name="inicio_permanencia" value={formData.inicio_permanencia} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Janeiro de 2015" required />
         </div>
         
         <div>

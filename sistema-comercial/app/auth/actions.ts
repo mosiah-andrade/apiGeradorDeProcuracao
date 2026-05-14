@@ -22,10 +22,38 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    redirect('/login?error=Falha na autenticação')
+    let errorMessage = 'Falha na autenticação'
+
+    // Tratamento específico por tipo de erro
+    switch (error.status) {
+      case 400:
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'E-mail ou senha incorretos.'
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Por favor, confirme seu e-mail antes de acessar.'
+        } else {
+          errorMessage = 'Dados de login inválidos.'
+        }
+        break
+      case 422:
+        errorMessage = 'Formato de e-mail inválido.'
+        break
+      case 429:
+        errorMessage = 'Muitas tentativas. Tente novamente mais tarde.'
+        break
+      case 500:
+        errorMessage = 'Erro interno no servidor. Tente novamente.'
+        break
+      default:
+        errorMessage = error.message
+    }
+
+    // Redireciona com a mensagem tratada
+    // Usamos encodeURIComponent para garantir que caracteres especiais não quebrem a URL
+    redirect(`/login?error=${encodeURIComponent(errorMessage)}`)
   }
 
-  // Redireciona para o dashboard do sistema comercial
+  // Redireciona para a home se tudo der certo
   redirect('/')
 }
 
@@ -35,6 +63,7 @@ export async function signUp(prevState: any, formData: FormData) {
   const password = formData.get('password') as string
   const fullName = formData.get('full_name') as string
 
+  // 1. Chamada ao Supabase
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -44,34 +73,52 @@ export async function signUp(prevState: any, formData: FormData) {
     }
   })
 
-  if (error) return { error: error.message }
+  // 2. Tratamento de Erros de Requisição (Status Codes)
+  if (error) {
+    let message = 'Ocorreu um erro ao criar sua conta.'
+    
+    switch (error.status) {
+      case 422:
+        message = 'E-mail inválido ou senha muito fraca.'
+        break
+      case 429:
+        message = 'Muitas tentativas seguidas. Aguarde um pouco.'
+        break
+      default:
+        message = error.message
+    }
+    
+    return { error: message }
+  }
 
-  // --- O PULO DO GATO ---
-  // Se identities for vazio, o usuário já existia no banco do Supabase
+  // 3. Validação de Usuário Existente (Identidades)
+  // O Supabase não retorna erro 400 se o e-mail já existe para evitar personificação
   const isNewUser = data.user?.identities && data.user.identities.length > 0
 
   if (!isNewUser) {
-    // Aqui paramos a execução. 
-    // O Supabase NÃO enviará o link de confirmação 
-    // E nós NÃO enviaremos o e-mail de boas-vindas.
-    return { error: 'Este e-mail já está cadastrado. Tente fazer login ou recuperar a senha.' }
-  }
-
-  // Se chegou aqui, o usuário é realmente novo
-  if (data?.user) {
-    try {
-      await sendWelcomeEmail(email, fullName)
-    } catch (e) {
-      console.error("Falha ao disparar e-mail de boas-vindas:", e)
+    return { 
+      error: 'Este e-mail já está associado a uma conta. Tente fazer login.' 
     }
   }
 
+  // 4. Ações de Sucesso (E-mail de boas-vindas)
+  try {
+    // Só dispara se for realmente um novo cadastro
+    await sendWelcomeEmail(email, fullName)
+  } catch (e) {
+    // Logamos o erro internamente, mas não barramos o usuário
+    console.error("Erro SMTP Boas-vindas:", e)
+  }
+
+  // 5. Redirecionamento Final
+  // Se o e-mail confirmation está ativo, não haverá sessão inicial
   if (data.user && !data.session) {
     redirect('/auth/verificar-email')
   }
 
   redirect('/')
 }
+
 
 export async function resetPassword(formData: FormData) {
   const supabase = await createClient();
