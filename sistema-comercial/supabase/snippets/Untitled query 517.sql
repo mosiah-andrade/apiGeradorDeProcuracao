@@ -1,5 +1,6 @@
-SELECT cron.schedule(
-  'limpeza-usuarios-nao-verificados',
-  '0 0 * * *',
-  'SELECT delete_unverified_users();'
-);
+INSERT INTO public.profiles (id, full_name, role)
+SELECT id, email, 'admin' 
+FROM auth.users 
+WHERE email = 'mosiahassuncao@gmail.com' -- Submeta o seu e-mail aqui
+ON CONFLICT (id) DO UPDATE 
+SET role = 'admin';
