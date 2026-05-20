@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { FileText, Plus, Loader2, Tag, Search, Download, Trash2 } from 'lucide-react';
+import { FileText, Plus, Loader2, Tag, Search, Download, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Inversor {
   id: string;
@@ -15,7 +15,6 @@ interface Inversor {
   criado_em: string;
 }
 
-// Interface para controlar a lista temporária no formulário
 interface ItemInversorTemporario {
   modelo: string;
   potencia: string;
@@ -47,6 +46,10 @@ export default function AdminInversoresPage() {
   const [busca, setBusca] = useState('');
   const [carregandoLista, setCarregandoLista] = useState(true);
   const [baixandoId, setBaixandoId] = useState<string | null>(null);
+
+  // ESTADOS DE PAGINAÇÃO
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 8; // Defina quantos itens quer exibir por página
 
   useEffect(() => {
     async function verificarAcessoECarregar() {
@@ -100,6 +103,11 @@ export default function AdminInversoresPage() {
     verificarAcessoECarregar();
   }, [router, supabase]);
 
+  // Sempre que a busca mudar, volta para a primeira página para evitar bugs visuais
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [busca]);
+
   async function carregarInversores() {
     setCarregandoLista(true);
     const { data, error } = await supabase
@@ -113,7 +121,6 @@ export default function AdminInversoresPage() {
     setCarregandoLista(false);
   }
 
-  // Adiciona o par Modelo + Potência para a lista visual temporária
   function handleAdicionarItemTemporario() {
     if (!modeloInput.trim()) return alert('Digite o modelo do equipamento.');
     if (!potenciaInput.trim() || parseFloat(potenciaInput) <= 0) return alert('Digite uma potência válida.');
@@ -123,12 +130,10 @@ export default function AdminInversoresPage() {
       { modelo: modeloInput.trim(), potencia: potenciaInput.trim() }
     ]);
 
-    // Limpa apenas os campos de modelo e potência para o próximo input
     setModeloInput('');
     setPotenciaInput('');
   }
 
-  // Remove um item da lista temporária antes de enviar
   function handleRemoverItemTemporario(index: number) {
     setItensTemporarios(itensTemporarios.filter((_, i) => i !== index));
   }
@@ -142,7 +147,6 @@ export default function AdminInversoresPage() {
 
     setEnviando(true);
     try {
-      // 1. Faz upload de UM ÚNICO arquivo PDF para o Storage
       const fileExt = arquivo.name.split('.').pop();
       const nomeBaseLimpo = itensTemporarios[0].modelo.toLowerCase().replace(/[^a-z0-9]/g, '_');
       const filePath = `${Date.now()}_ds_${nomeBaseLimpo}.${fileExt}`;
@@ -153,19 +157,16 @@ export default function AdminInversoresPage() {
 
       if (uploadError) throw uploadError;
 
-      // 2. Prepara as tags comuns
       const arrayTags = tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
 
-      // 3. Mapeia a lista temporária para o formato do banco de dados (Bulk Insert)
       const rowsToInsert = itensTemporarios.map((item) => ({
         modelo: item.modelo,
         fabricante,
         potencia_kw: parseFloat(item.potencia),
         tags: arrayTags,
-        datasheet_path: filePath, // Todos compartilham rigorosamente o mesmo PDF único
+        datasheet_path: filePath,
       }));
 
-      // 4. Insere em lote no Supabase
       const { error: insertError } = await supabase
         .from('inversores')
         .insert(rowsToInsert);
@@ -174,7 +175,6 @@ export default function AdminInversoresPage() {
 
       alert(`${rowsToInsert.length} inversor(es) cadastrado(s) com sucesso!`);
       
-      // Limpa todo o formulário e estados temporários
       setItensTemporarios([]);
       setFabricante('');
       setTags('');
@@ -218,6 +218,7 @@ export default function AdminInversoresPage() {
     }
   }
 
+  // 1. Primeiro aplica o Filtro de Busca
   const inversoresFiltrados = inversores.filter((inv) => {
     const termo = busca.toLowerCase();
     return (
@@ -226,6 +227,16 @@ export default function AdminInversoresPage() {
       inv.tags?.some((t) => t.toLowerCase().includes(termo))
     );
   });
+
+  // 2. Cálculos de Paginação baseados nos itens já filtrados
+  const totalItensFiltrados = inversoresFiltrados.length;
+  const totalPaginas = Math.ceil(totalItensFiltrados / itensPorPagina) || 1;
+  
+  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
+  const indiceFinal = indiceInicial + itensPorPagina;
+  
+  // Corta a lista para exibir apenas a fatia da página correspondente
+  const inversoresPaginados = inversoresFiltrados.slice(indiceInicial, indiceFinal);
 
   if (loadingAuth) {
     return (
@@ -285,7 +296,6 @@ export default function AdminInversoresPage() {
                   <Plus className="h-3 w-3" /> Incluir Modelo na Lista
                 </button>
 
-                {/* LISTA PREVISUAL DA DIGITAÇÃO */}
                 {itensTemporarios.length > 0 && (
                   <div className="border-t pt-2 mt-2 space-y-1 max-h-32 overflow-y-auto">
                     {itensTemporarios.map((item, index) => (
@@ -322,7 +332,7 @@ export default function AdminInversoresPage() {
             </form>
           </div>
 
-          {/* SEÇÃO DA LISTAGEM COM FILTRO INTEGRADO */}
+          {/* SEÇÃO DA LISTAGEM COM FILTRO E PAGINAÇÃO */}
           <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-3 border-slate-100">
               <div className="flex items-center gap-2">
@@ -344,56 +354,94 @@ export default function AdminInversoresPage() {
 
             {carregandoLista ? (
               <div className="py-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>
-            ) : inversoresFiltrados.length === 0 ? (
+            ) : inversoresPaginados.length === 0 ? (
               <div className="text-center py-12 text-slate-400 text-sm">
                 {busca ? 'Nenhum resultado encontrado para a pesquisa.' : 'Nenhum inversor adicionado ao catálogo técnico.'}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-medium">
-                      <th className="p-3">Modelo / Marca</th>
-                      <th className="p-3">Potência</th>
-                      <th className="p-3">Tags</th>
-                      <th className="p-3 text-center">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inversoresFiltrados.map((inv) => (
-                      <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
-                        <td className="p-3">
-                          <p className="font-semibold text-slate-800">{inv.modelo}</p>
-                          <p className="text-xs text-slate-400">{inv.fabricante}</p>
-                        </td>
-                        <td className="p-3 text-slate-600 font-medium">{inv.potencia_kw} kW</td>
-                        <td className="p-3">
-                          <div className="flex flex-wrap gap-1 max-w-[200px]">
-                            {inv.tags?.map((tag, idx) => (
-                              <span key={idx} className="flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200/40">
-                                <Tag className="h-2.5 w-2.5" /> {tag}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="p-3 text-center">
-                            <button
-                                onClick={() => handleBaixarDatasheet(inv.datasheet_path, inv.id, inv.modelo)}
-                                disabled={baixandoId === inv.id}
-                                title="Baixar Datasheet"
-                                className="inline-flex items-center justify-center p-2 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition disabled:opacity-50 cursor-pointer"
-                                >
-                                {baixandoId === inv.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
-                                ) : (
-                                    <Download className="h-4 w-4" />
-                                )}
-                            </button>
-                        </td>
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-medium">
+                        <th className="p-3">Modelo / Marca</th>
+                        <th className="p-3">Potência</th>
+                        <th className="p-3">Tags</th>
+                        <th className="p-3 text-center">Ações</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {inversoresPaginados.map((inv) => (
+                        <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition">
+                          <td className="p-3">
+                            <p className="font-semibold text-slate-800">{inv.modelo}</p>
+                            <p className="text-xs text-slate-400">{inv.fabricante}</p>
+                          </td>
+                          <td className="p-3 text-slate-600 font-medium">{inv.potencia_kw} kW</td>
+                          <td className="p-3">
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {inv.tags?.map((tag, idx) => (
+                                <span key={idx} className="flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200/40">
+                                  <Tag className="h-2.5 w-2.5" /> {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="p-3 text-center">
+                              <button
+                                  onClick={() => handleBaixarDatasheet(inv.datasheet_path, inv.id, inv.modelo)}
+                                  disabled={baixandoId === inv.id}
+                                  title="Baixar Datasheet"
+                                  className="inline-flex items-center justify-center p-2 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition disabled:opacity-50 cursor-pointer"
+                                  >
+                                  {baixandoId === inv.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
+                                  ) : (
+                                      <Download className="h-4 w-4" />
+                                  )}
+                              </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* CONTROLES VISUAIS DA PAGINAÇÃO */}
+                <div className="flex items-center justify-between border-t pt-4 border-slate-100 text-xs text-slate-500 font-medium">
+                  <span>
+                    Mostrando <strong className="text-slate-700">{indiceInicial + 1}</strong> a{' '}
+                    <strong className="text-slate-700">
+                      {Math.min(indiceFinal, totalItensFiltrados)}
+                    </strong>{' '}
+                    de <strong className="text-slate-700">{totalItensFiltrados}</strong> inversores
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={paginaAtual === 1}
+                      onClick={() => setPaginaAtual((prev) => prev - 1)}
+                      className="p-2 border rounded-lg hover:bg-slate-50 transition disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    
+                    <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-md border font-semibold">
+                      {paginaAtual} / {totalPaginas}
+                    </span>
+
+                    <button
+                      type="button"
+                      disabled={paginaAtual === totalPaginas}
+                      onClick={() => setPaginaAtual((prev) => prev + 1)}
+                      className="p-2 border rounded-lg hover:bg-slate-50 transition disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
               </div>
             )}
           </div>
