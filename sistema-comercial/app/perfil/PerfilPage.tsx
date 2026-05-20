@@ -63,7 +63,7 @@ export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
       <div className="max-w-4xl mx-auto px-6 space-y-8">
         
         {/* Card Principal: Informações */}
-        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
           <form action={formAction} className="p-8 space-y-10">
             <input type="hidden" name="avatar_url" value={avatarUrl} />
             <input type="hidden" name="company_logo_url" value={logoUrl} />
@@ -134,7 +134,7 @@ export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
         </div>
 
         {/* Card de Assinatura - Contexto Separado */}
-        <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl shadow-slate-200 overflow-hidden relative group">
+        <div className="bg-slate-900 rounded-4xl p-8 text-white shadow-2xl shadow-slate-200 overflow-hidden relative group">
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-500">
             <CreditCard size={120} />
           </div>
