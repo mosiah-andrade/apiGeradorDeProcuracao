@@ -17,6 +17,16 @@ export default async function Navbar() {
   const nome = perfilInicial?.full_name || "Usuário"
   const email = user.email
   const avatar = perfilInicial?.avatar_url
+  const { data: subscription, error } = await supabase
+    .from('subscriptions')
+    .select('status')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle(); // Retorna o objeto ou null se não existir
+
+  // 2. Define a variável isPro de forma segura
+  // Se houver dados (subscription não é null), isPro será true
+  const isPro = !!subscription; 
 
   return (
     <header className="bg-white border-b border-slate-100 px-6 md:px-8 py-4 flex justify-between items-center sticky top-0 z-50">
@@ -33,6 +43,9 @@ export default async function Navbar() {
           <Link href="/" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Dashboard</Link>
           <Link href="/proposta" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Propostas</Link>
           <Link href="/planos" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Planos</Link>
+          {isPro && (
+            <Link href="/datasheets" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Datasheets</Link>
+          )}
         </nav>
       </div>
 

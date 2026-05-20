@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -23,6 +22,7 @@ export default function MobileMenu() {
           <Link href="/planos" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-600">Planos</Link>
           <hr className="border-slate-100" />
           <Link href="/perfil" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-600">Meu Perfil</Link>
+          <Link href="/logout" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-600">Sair</Link>
         </div>
       )}
     </div>

@@ -1,0 +1,1 @@
+SELECT * FROM public.inversores LIMIT 5;
