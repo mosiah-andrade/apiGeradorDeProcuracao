@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { FileText, Plus, Loader2, Tag, Search, Download } from 'lucide-react';
+import { FileText, Plus, Loader2, Tag, Search, Download, Trash2 } from 'lucide-react';
 
 interface Inversor {
   id: string;
@@ -15,6 +15,12 @@ interface Inversor {
   criado_em: string;
 }
 
+// Interface para controlar a lista temporária no formulário
+interface ItemInversorTemporario {
+  modelo: string;
+  potencia: string;
+}
+
 export default function AdminInversoresPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -23,15 +29,20 @@ export default function AdminInversoresPage() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Estados do Formulário
-  const [modelos, setModelos] = useState(''); // Alterado para aceitar múltiplos
+  // Estados dos Inputs Atuais
+  const [modeloInput, setModeloInput] = useState('');
+  const [potenciaInput, setPotenciaInput] = useState('');
+  
+  // Estado da Lista Temporária de Inversores antes do envio
+  const [itensTemporarios, setItensTemporarios] = useState<ItemInversorTemporario[]>([]);
+
+  // Demais Estados do Formulário
   const [fabricante, setFabricante] = useState('');
-  const [potencia, setPotencia] = useState('');
   const [tags, setTags] = useState('');
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  // Estado da Lista e Filtro
+  // Estado da Lista Vinda do Banco e Filtro
   const [inversores, setInversores] = useState<Inversor[]>([]);
   const [busca, setBusca] = useState('');
   const [carregandoLista, setCarregandoLista] = useState(true);
@@ -102,20 +113,38 @@ export default function AdminInversoresPage() {
     setCarregandoLista(false);
   }
 
+  // Adiciona o par Modelo + Potência para a lista visual temporária
+  function handleAdicionarItemTemporario() {
+    if (!modeloInput.trim()) return alert('Digite o modelo do equipamento.');
+    if (!potenciaInput.trim() || parseFloat(potenciaInput) <= 0) return alert('Digite uma potência válida.');
+
+    setItensTemporarios([
+      ...itensTemporarios,
+      { modelo: modeloInput.trim(), potencia: potenciaInput.trim() }
+    ]);
+
+    // Limpa apenas os campos de modelo e potência para o próximo input
+    setModeloInput('');
+    setPotenciaInput('');
+  }
+
+  // Remove um item da lista temporária antes de enviar
+  function handleRemoverItemTemporario(index: number) {
+    setItensTemporarios(itensTemporarios.filter((_, i) => i !== index));
+  }
+
   async function handleCadastrar(e: React.FormEvent) {
     e.preventDefault();
-    if (!arquivo) return alert('Selecione o arquivo PDF.');
-
-    // Transforma a string de modelos em um array limpo
-    const listaModelos = modelos.split(',').map((m) => m.trim()).filter((m) => m.length > 0);
-    if (listaModelos.length === 0) return alert('Digite ao menos um modelo.');
+    if (itensTemporarios.length === 0) {
+      return alert('Adicione pelo menos um modelo com potência na lista temporária.');
+    }
+    if (!arquivo) return alert('Selecione o arquivo PDF do Datasheet.');
 
     setEnviando(true);
     try {
-      // 1. Faz upload de apenas um único arquivo PDF para o Storage
+      // 1. Faz upload de UM ÚNICO arquivo PDF para o Storage
       const fileExt = arquivo.name.split('.').pop();
-      // Usa o nome do primeiro modelo inserido para compor o nome do arquivo único
-      const nomeBaseLimpo = listaModelos[0].toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const nomeBaseLimpo = itensTemporarios[0].modelo.toLowerCase().replace(/[^a-z0-9]/g, '_');
       const filePath = `${Date.now()}_ds_${nomeBaseLimpo}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
@@ -124,27 +153,33 @@ export default function AdminInversoresPage() {
 
       if (uploadError) throw uploadError;
 
-      // 2. Prepara as tags comuns a todos eles
+      // 2. Prepara as tags comuns
       const arrayTags = tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
 
-      // 3. Mapeia cada modelo digitado para criar itens individuais na tabela, compartilhando o mesmo datasheet_path
-      const rowsToInsert = listaModelos.map((modeloIndividual) => ({
-        modelo: modeloIndividual,
+      // 3. Mapeia a lista temporária para o formato do banco de dados (Bulk Insert)
+      const rowsToInsert = itensTemporarios.map((item) => ({
+        modelo: item.modelo,
         fabricante,
-        potencia_kw: parseFloat(potencia),
+        potencia_kw: parseFloat(item.potencia),
         tags: arrayTags,
-        datasheet_path: filePath, // Todos apontam para o mesmo PDF que subimos acima
+        datasheet_path: filePath, // Todos compartilham rigorosamente o mesmo PDF único
       }));
 
-      // 4. Insere todos de uma vez (em lote) no banco de dados
+      // 4. Insere em lote no Supabase
       const { error: insertError } = await supabase
         .from('inversores')
         .insert(rowsToInsert);
 
       if (insertError) throw insertError;
 
-      alert(`${listaModelos.length} inversor(es) cadastrado(s) com sucesso!`);
-      setModelos(''); setFabricante(''); setPotencia(''); setTags(''); setArquivo(null);
+      alert(`${rowsToInsert.length} inversor(es) cadastrado(s) com sucesso!`);
+      
+      // Limpa todo o formulário e estados temporários
+      setItensTemporarios([]);
+      setFabricante('');
+      setTags('');
+      setArquivo(null);
+      
       await carregarInversores();
     } catch (error: any) {
       alert(`Erro: ${error.message}`);
@@ -153,32 +188,25 @@ export default function AdminInversoresPage() {
     }
   }
 
-  // Função responsável por gerar o link seguro e baixar o PDF
   async function handleBaixarDatasheet(path: string, id: string, modeloInversor: string) {
     setBaixandoId(id);
     try {
       const { data, error } = await supabase.storage
         .from('datasheets')
-        .createSignedUrl(path, 60); // Link expira em 60 segundos
+        .createSignedUrl(path, 60);
 
       if (error) throw error;
 
       if (data?.signedUrl) {
-        // 1. Sanitiza o nome do modelo para remover caracteres inválidos para nomes de ficheiros
         const nomeFicheiroLimpo = modeloInversor
           .toLowerCase()
           .replace(/[^a-z0-9]/g, '_');
 
-        // 2. Cria um elemento <a> temporário em memória
         const link = document.createElement('a');
         link.href = data.signedUrl;
-        
-        // 3. Força o atributo 'download' com o nome do modelo clicado
         link.download = `datasheet_${nomeFicheiroLimpo}.pdf`;
-        
         link.target = '_blank'; 
 
-        // 4. Adiciona ao documento, clica magneticamente e remove em seguida
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -190,7 +218,6 @@ export default function AdminInversoresPage() {
     }
   }
 
-  // Filtro client-side reativo
   const inversoresFiltrados = inversores.filter((inv) => {
     const termo = busca.toLowerCase();
     return (
@@ -228,41 +255,69 @@ export default function AdminInversoresPage() {
               <Plus className="h-5 w-5 text-slate-900" />
               <h2 className="font-semibold text-slate-800">Novo Equipamento</h2>
             </div>
+            
             <form onSubmit={handleCadastrar} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Modelo(s)</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={modelos} 
-                  onChange={e => setModelos(e.target.value)}
-                  placeholder="Ex: SUN2000-50KTL, SUN2000-75KTL"
-                  className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" 
-                />
-              </div>
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Fabricante</label>
                 <input type="text" required value={fabricante} onChange={e => setFabricante(e.target.value)}
                   className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" />
               </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Potência Nominal (kW)</label>
-                <input type="number" step="0.01" required value={potencia} onChange={e => setPotencia(e.target.value)}
-                  className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" />
+
+              {/* SEÇÃO DINÂMICA: ADICIONAR MODELOS E POTÊNCIAS */}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/60 space-y-3">
+                <span className="block text-xs font-bold uppercase text-slate-600">Modelos do Datasheet</span>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-0.5">Modelo</label>
+                    <input type="text" value={modeloInput} onChange={e => setModeloInput(e.target.value)} placeholder="Ex: SUN2000-50KTL"
+                      className="w-full text-xs border rounded bg-white p-2 outline-none focus:ring-1 focus:ring-slate-400" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-0.5">Potência (kW)</label>
+                    <input type="number" step="0.01" value={potenciaInput} onChange={e => setPotenciaInput(e.target.value)} placeholder="50"
+                      className="w-full text-xs border rounded bg-white p-2 outline-none focus:ring-1 focus:ring-slate-400" />
+                  </div>
+                </div>
+
+                <button type="button" onClick={handleAdicionarItemTemporario}
+                  className="w-full py-1.5 px-3 border border-dashed border-slate-300 hover:border-slate-400 bg-white text-slate-700 text-xs font-medium rounded transition flex items-center justify-center gap-1">
+                  <Plus className="h-3 w-3" /> Incluir Modelo na Lista
+                </button>
+
+                {/* LISTA PREVISUAL DA DIGITAÇÃO */}
+                {itensTemporarios.length > 0 && (
+                  <div className="border-t pt-2 mt-2 space-y-1 max-h-32 overflow-y-auto">
+                    {itensTemporarios.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between bg-white px-2 py-1 rounded border border-slate-100 text-xs">
+                        <span className="font-medium text-slate-700 truncate max-w-[120px]">{item.modelo}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 font-semibold">{item.potencia} kW</span>
+                          <button type="button" onClick={() => handleRemoverItemTemporario(index)} className="text-red-500 hover:text-red-700">
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Tags</label>
                 <input type="text" value={tags} onChange={e => setTags(e.target.value)}
                   className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" placeholder="Separadas por vírgula" />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Datasheet (PDF Único)</label>
+                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Datasheet Compartilhado (PDF)</label>
                 <input type="file" accept=".pdf" required onChange={e => setArquivo(e.target.files?.[0] || null)}
                   className="w-full text-sm border file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-slate-100 hover:file:bg-slate-200 p-1 bg-slate-50 rounded-lg border-slate-200 cursor-pointer" />
               </div>
-              <button type="submit" disabled={enviando}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm p-3 rounded-lg transition disabled:bg-slate-300 flex items-center justify-center gap-2">
-                {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar no Catálogo'}
+
+              <button type="submit" disabled={enviando || itensTemporarios.length === 0}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm p-3 rounded-lg transition disabled:bg-slate-200 disabled:text-slate-400 flex items-center justify-center gap-2">
+                {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : `Salvar Catálogo (${itensTemporarios.length} itens)`}
               </button>
             </form>
           </div>
@@ -275,7 +330,6 @@ export default function AdminInversoresPage() {
                 <h2 className="font-semibold text-slate-800">Modelos Cadastrados</h2>
               </div>
               
-              {/* Barra de Pesquisa */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <input 
