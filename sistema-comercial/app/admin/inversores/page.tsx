@@ -24,7 +24,7 @@ export default function AdminInversoresPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Estados do Formulário
-  const [modelo, setModelo] = useState('');
+  const [modelos, setModelos] = useState(''); // Alterado para aceitar múltiplos
   const [fabricante, setFabricante] = useState('');
   const [potencia, setPotencia] = useState('');
   const [tags, setTags] = useState('');
@@ -106,11 +106,17 @@ export default function AdminInversoresPage() {
     e.preventDefault();
     if (!arquivo) return alert('Selecione o arquivo PDF.');
 
+    // Transforma a string de modelos em um array limpo
+    const listaModelos = modelos.split(',').map((m) => m.trim()).filter((m) => m.length > 0);
+    if (listaModelos.length === 0) return alert('Digite ao menos um modelo.');
+
     setEnviando(true);
     try {
+      // 1. Faz upload de apenas um único arquivo PDF para o Storage
       const fileExt = arquivo.name.split('.').pop();
-      const nomeLimpo = modelo.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const filePath = `${Date.now()}_${nomeLimpo}.${fileExt}`;
+      // Usa o nome do primeiro modelo inserido para compor o nome do arquivo único
+      const nomeBaseLimpo = listaModelos[0].toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const filePath = `${Date.now()}_ds_${nomeBaseLimpo}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('datasheets')
@@ -118,22 +124,27 @@ export default function AdminInversoresPage() {
 
       if (uploadError) throw uploadError;
 
+      // 2. Prepara as tags comuns a todos eles
       const arrayTags = tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
 
+      // 3. Mapeia cada modelo digitado para criar itens individuais na tabela, compartilhando o mesmo datasheet_path
+      const rowsToInsert = listaModelos.map((modeloIndividual) => ({
+        modelo: modeloIndividual,
+        fabricante,
+        potencia_kw: parseFloat(potencia),
+        tags: arrayTags,
+        datasheet_path: filePath, // Todos apontam para o mesmo PDF que subimos acima
+      }));
+
+      // 4. Insere todos de uma vez (em lote) no banco de dados
       const { error: insertError } = await supabase
         .from('inversores')
-        .insert([{
-          modelo,
-          fabricante,
-          potencia_kw: parseFloat(potencia),
-          tags: arrayTags,
-          datasheet_path: filePath,
-        }]);
+        .insert(rowsToInsert);
 
       if (insertError) throw insertError;
 
-      alert('Inversor cadastrado com sucesso!');
-      setModelo(''); setFabricante(''); setPotencia(''); setTags(''); setArquivo(null);
+      alert(`${listaModelos.length} inversor(es) cadastrado(s) com sucesso!`);
+      setModelos(''); setFabricante(''); setPotencia(''); setTags(''); setArquivo(null);
       await carregarInversores();
     } catch (error: any) {
       alert(`Erro: ${error.message}`);
@@ -156,16 +167,15 @@ export default function AdminInversoresPage() {
         // 1. Sanitiza o nome do modelo para remover caracteres inválidos para nomes de ficheiros
         const nomeFicheiroLimpo = modeloInversor
           .toLowerCase()
-          .replace(/[^a-z0-9]/g, '_'); // Ex: "SUN2000-75KTL" vira "sun2000_75ktl"
+          .replace(/[^a-z0-9]/g, '_');
 
         // 2. Cria um elemento <a> temporário em memória
         const link = document.createElement('a');
         link.href = data.signedUrl;
         
-        // 3. Força o atributo 'download' com o nome customizado que desejas
+        // 3. Força o atributo 'download' com o nome do modelo clicado
         link.download = `datasheet_${nomeFicheiroLimpo}.pdf`;
         
-        // Importante para links de domínios diferentes (CORS) abrir numa nova aba se o download direto falhar
         link.target = '_blank'; 
 
         // 4. Adiciona ao documento, clica magneticamente e remove em seguida
@@ -220,9 +230,15 @@ export default function AdminInversoresPage() {
             </div>
             <form onSubmit={handleCadastrar} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Modelo</label>
-                <input type="text" required value={modelo} onChange={e => setModelo(e.target.value)}
-                  className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" />
+                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Modelo(s)</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={modelos} 
+                  onChange={e => setModelos(e.target.value)}
+                  placeholder="Ex: SUN2000-50KTL, SUN2000-75KTL"
+                  className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" 
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Fabricante</label>
@@ -240,7 +256,7 @@ export default function AdminInversoresPage() {
                   className="w-full text-sm border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-slate-200 transition" placeholder="Separadas por vírgula" />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Datasheet (PDF)</label>
+                <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">Datasheet (PDF Único)</label>
                 <input type="file" accept=".pdf" required onChange={e => setArquivo(e.target.files?.[0] || null)}
                   className="w-full text-sm border file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-slate-100 hover:file:bg-slate-200 p-1 bg-slate-50 rounded-lg border-slate-200 cursor-pointer" />
               </div>
@@ -308,7 +324,7 @@ export default function AdminInversoresPage() {
                         </td>
                         <td className="p-3 text-center">
                             <button
-                                onClick={() => handleBaixarDatasheet(inv.datasheet_path, inv.id, inv.modelo)} // <-- Adicionado inv.modelo aqui
+                                onClick={() => handleBaixarDatasheet(inv.datasheet_path, inv.id, inv.modelo)}
                                 disabled={baixandoId === inv.id}
                                 title="Baixar Datasheet"
                                 className="inline-flex items-center justify-center p-2 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition disabled:opacity-50 cursor-pointer"
