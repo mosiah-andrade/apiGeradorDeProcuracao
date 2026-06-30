@@ -80,6 +80,17 @@ export default function MobileMenu({ isPro }: { isPro: boolean }) {
                   >
                     Datasheets
                   </Link>
+
+                  <Link
+                    href="/kanban"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsProOpen(false);
+                    }}
+                    className="text-sm text-slate-600"
+                  >
+                    Kanban
+                  </Link>
                 </div>
               )}
             </div>

@@ -75,6 +75,12 @@ export default async function Navbar() {
                 >
                   Datasheets
                 </Link>
+                <Link
+                  href="/kanban"
+                  className="block px-4 py-3 text-sm hover:bg-slate-100"
+                >
+                  Kanban
+                </Link>
               </div>
             </div>
           )}
