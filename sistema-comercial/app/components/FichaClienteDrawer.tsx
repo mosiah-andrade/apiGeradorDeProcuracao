@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { X, User, Mail, Phone, MapPin, Zap, Trash2, Edit2, Check, Download, Eye, Plus } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Zap, Trash2, Edit2, Check, Download, Eye, Plus, FolderOpen } from 'lucide-react';
+import { RepositorioCliente } from './RepositorioCliente';
+import Link from 'next/link';
 
 interface FichaClienteDrawerProps {
   clienteId: string | null;
@@ -18,6 +20,9 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
   const [listaStatus, setListaStatus] = useState<any[]>([]);
 
   const [loadingAcaoId, setLoadingAcaoId] = useState<string | null>(null);
+
+  // Controle de Abas
+  const [abaAtiva, setAbaAtiva] = useState<'detalhes' | 'documentos'>('detalhes');
 
   // Estados dos campos editáveis do cliente
   const [modoEdicao, setModoEdicao] = useState(false);
@@ -85,6 +90,7 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
     if (clienteId) {
       setModoEdicao(false);
       setNovoStatusNome('');
+      setAbaAtiva('detalhes'); // Sempre abre na aba de detalhes
       carregarFicha();
     }
   }, [clienteId]);
@@ -118,7 +124,6 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
     });
   };
 
-  // --- AÇÃO EXCLUSIVA: EXCLUIR CLIENTE INTEGRADO ---
   const handleExcluirCliente = async () => {
     const confirmar = confirm(`⚠️ ATENÇÃO: Deseja realmente excluir o cliente "${nome}"? Esta ação removerá permanentemente o cadastro e todo o histórico de propostas comerciais dele.`);
     if (!confirmar) return;
@@ -133,8 +138,8 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
         if (error) throw error;
 
         alert('Cliente solar removido com sucesso do sistema!');
-        if (onClienteAtualizado) onClienteAtualizado(); // Recarrega os dados do Kanban em tempo real
-        onClose(); // Fecha o Drawer lateral imediatamente
+        if (onClienteAtualizado) onClienteAtualizado();
+        onClose();
       } catch (error: any) {
         alert('Erro ao tentar excluir o registro: ' + error.message);
       }
@@ -195,7 +200,6 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
     }
   };
 
-  // --- MÉTODOS DE PROPOSTA ---
   const handleBaixarPDF = async (proposta: any) => {
     setLoadingAcaoId(`${proposta.id}-download`);
     try {
@@ -260,18 +264,21 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
         <div className="flex items-center gap-2">
           <User className="text-amber-500 w-5 h-5" />
-          <h2 className="text-lg font-bold text-slate-800">Ficha do Cliente Solar</h2>
+          <h2 className="text-lg font-bold text-slate-800">Ficha do Cliente</h2>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => (modoEdicao ? handleSalvarAlteracoes() : setModoEdicao(true))}
-            disabled={isPending}
-            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${
-              modoEdicao ? 'bg-green-600 text-white border-green-600 hover:bg-green-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            {modoEdicao ? <><Check className="w-3.5 h-3.5" /> Salvar</> : <><Edit2 className="w-3.5 h-3.5" /> Editar</>}
-          </button>
+          {/* Botão de Edição só aparece na aba de Detalhes */}
+          {abaAtiva === 'detalhes' && (
+            <button
+              onClick={() => (modoEdicao ? handleSalvarAlteracoes() : setModoEdicao(true))}
+              disabled={isPending}
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${
+                modoEdicao ? 'bg-green-600 text-white border-green-600 hover:bg-green-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {modoEdicao ? <><Check className="w-3.5 h-3.5" /> Salvar</> : <><Edit2 className="w-3.5 h-3.5" /> Editar</>}
+            </button>
+          )}
           <button 
             onClick={onClose} 
             className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
@@ -281,133 +288,177 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
         </div>
       </div>
 
+      {/* Navegação por Abas */}
+      <div className="flex px-6 border-b border-slate-200 bg-slate-50">
+        <button 
+          onClick={() => setAbaAtiva('detalhes')}
+          className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${
+            abaAtiva === 'detalhes' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          Dados Cadastrais
+        </button>
+        <button 
+          onClick={() => setAbaAtiva('documentos')}
+          className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2 ${
+            abaAtiva === 'documentos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <FolderOpen className="w-4 h-4" />
+          Documentos
+        </button>
+        <Link 
+          href="/configuracoes/documentos" 
+          className="ml-auto text-xs text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          Configurar Regras
+        </Link>
+      </div>
+
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white flex flex-col justify-between">
-          <div className="space-y-6">
-            <div className="space-y-3 border-b border-slate-100 pb-4">
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Status Atual do Funil</label>
-                {!modoEdicao ? (
-                  <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
-                    {statusNome}
-                  </span>
-                ) : (
-                  <div className="space-y-3">
-                    <select
-                      value={statusId}
-                      onChange={(e) => setStatusId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white outline-none focus:ring-2 focus:ring-amber-500/20"
-                    >
-                      <option value="">Sem Status Definido</option>
-                      {listaStatus.map((st) => (
-                        <option key={st.id} value={st.id}>{st.nome}</option>
-                      ))}
-                    </select>
+        <div className="flex-1 overflow-y-auto p-6 bg-white flex flex-col justify-between">
+          
+          {/* CONTEÚDO DA ABA: DETALHES */}
+          {abaAtiva === 'detalhes' ? (
+            <>
+              <div className="space-y-6">
+                <div className="space-y-3 border-b border-slate-100 pb-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Status Atual do Funil</label>
+                    {!modoEdicao ? (
+                      <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                        {statusNome}
+                      </span>
+                    ) : (
+                      <div className="space-y-3">
+                        <select
+                          value={statusId}
+                          onChange={(e) => setStatusId(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white outline-none focus:ring-2 focus:ring-amber-500/20"
+                        >
+                          <option value="">Sem Status Definido</option>
+                          {listaStatus.map((st) => (
+                            <option key={st.id} value={st.id}>{st.nome}</option>
+                          ))}
+                        </select>
 
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
-                      <span className="text-[10px] font-bold text-slate-500 block">Excluir colunas customizadas:</span>
-                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                        {listaStatus.map((st) => {
-                          const ehProtegido = colunasProtegidas.includes(st.nome.toLowerCase().trim());
-                          if (ehProtegido) return null;
-                          return (
-                            <div key={st.id} className="flex items-center gap-1 bg-white border border-slate-200 pl-2 pr-1 py-1 rounded-lg text-xs font-medium text-slate-700">
-                              <span>{st.nome}</span>
-                              <button type="button" onClick={() => handleExcluirStatus(st.id, st.nome)} className="text-slate-300 hover:text-red-500 p-0.5 rounded"><Trash2 className="w-3 h-3" /></button>
-                            </div>
-                          );
-                        })}
+                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
+                          <span className="text-[10px] font-bold text-slate-500 block">Excluir colunas customizadas:</span>
+                          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                            {listaStatus.map((st) => {
+                              const ehProtegido = colunasProtegidas.includes(st.nome.toLowerCase().trim());
+                              if (ehProtegido) return null;
+                              return (
+                                <div key={st.id} className="flex items-center gap-1 bg-white border border-slate-200 pl-2 pr-1 py-1 rounded-lg text-xs font-medium text-slate-700">
+                                  <span>{st.nome}</span>
+                                  <button type="button" onClick={() => handleExcluirStatus(st.id, st.nome)} className="text-slate-300 hover:text-red-500 p-0.5 rounded"><Trash2 className="w-3 h-3" /></button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-1.5">
+                          <input type="text" placeholder="Criar outro status..." value={novoStatusNome} onChange={(e) => setNovoStatusNome(e.target.value)} className="flex-1 px-3 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 outline-none" />
+                          <button type="button" onClick={handleCriarNovoStatus} className="px-2 py-1 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-0.5"><Plus className="w-3 h-3" /> Adicionar</button>
+                        </div>
                       </div>
-                    </div>
+                    )}
+                  </div>
 
-                    <div className="flex gap-1.5">
-                      <input type="text" placeholder="Criar outro status..." value={novoStatusNome} onChange={(e) => setNovoStatusNome(e.target.value)} className="flex-1 px-3 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 outline-none" />
-                      <button type="button" onClick={handleCriarNovoStatus} className="px-2 py-1 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-0.5"><Plus className="w-3 h-3" /> Adicionar</button>
+                  <div className="pt-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Nome do Cliente</label>
+                    <input type="text" disabled={!modoEdicao} value={nome} onChange={(e) => setNome(e.target.value)} className="w-full mt-1 px-3 py-1.5 rounded-xl border border-slate-200 text-sm font-semibold disabled:bg-transparent" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
+                      <input type="email" disabled={!modoEdicao} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">Telefone</label>
+                      <input type="text" disabled={!modoEdicao} value={telefone} onChange={(e) => setTelefone(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div className="pt-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Nome do Cliente</label>
-                <input type="text" disabled={!modoEdicao} value={nome} onChange={(e) => setNome(e.target.value)} className="w-full mt-1 px-3 py-1.5 rounded-xl border border-slate-200 text-sm font-semibold disabled:bg-transparent" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
-                  <input type="email" disabled={!modoEdicao} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase">Telefone</label>
-                  <input type="text" disabled={!modoEdicao} value={telefone} onChange={(e) => setTelefone(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase">Cidade</label>
-                  <input type="text" disabled={!modoEdicao} value={cidade} onChange={(e) => setCidade(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase">Estado</label>
-                  <input type="text" maxLength={2} disabled={!modoEdicao} value={estado} onChange={(e) => setEstado(e.target.value.toUpperCase())} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm text-center disabled:bg-transparent" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Concessionária</label>
-                <input type="text" disabled={!modoEdicao} value={concessionaria} onChange={(e) => setConcessionaria(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Código UC</label>
-                <input type="text" disabled={!modoEdicao} value={codigoUc} onChange={(e) => setCodigoUc(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm font-mono disabled:bg-transparent" />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Histórico de Propostas</h4>
-              {propostas.length === 0 ? (
-                <p className="text-xs text-slate-400 italic bg-slate-50 p-4 rounded-xl text-center border border-dashed">Nenhuma proposta gerada.</p>
-              ) : (
-                <div className="space-y-3">
-                  {propostas.map((prop) => (
-                    <div key={prop.id} className="p-4 border border-slate-100 rounded-2xl bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white transition-all">
-                      <div>
-                        <div className="text-base font-black text-slate-900">{prop.valor_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-                        <div className="text-xs text-slate-400 font-mono mt-0.5">{prop.potencia_kwp} kWp • {new Date(prop.created_at).toLocaleDateString('pt-BR')}</div>
-                      </div>
-                      <div className="flex items-center gap-1 bg-white border border-slate-200/60 rounded-xl p-1 shrink-0">
-                        <button onClick={() => handlePreviewPDF(prop)} className="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => handleBaixarPDF(prop)} className="p-1.5 text-slate-500 hover:text-green-600 rounded-lg"><Download className="w-4 h-4" /></button>
-                        <button onClick={() => handleReenviarEmail(prop)} className="p-1.5 text-slate-500 hover:text-amber-600 rounded-lg"><Mail className="w-4 h-4" /></button>
-                        <div className="w-px h-4 bg-slate-200 mx-1" />
-                        <button onClick={() => handleExcluirProposta(prop.id)} className="p-1.5 text-slate-300 hover:text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-                      </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">Cidade</label>
+                      <input type="text" disabled={!modoEdicao} value={cidade} onChange={(e) => setCidade(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
                     </div>
-                  ))}
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase">Estado</label>
+                      <input type="text" maxLength={2} disabled={!modoEdicao} value={estado} onChange={(e) => setEstado(e.target.value.toUpperCase())} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm text-center disabled:bg-transparent" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Concessionária</label>
+                    <input type="text" disabled={!modoEdicao} value={concessionaria} onChange={(e) => setConcessionaria(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm disabled:bg-transparent" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Código UC</label>
+                    <input type="text" disabled={!modoEdicao} value={codigoUc} onChange={(e) => setCodigoUc(e.target.value)} className="w-full mt-1 px-3 py-1.5 border border-slate-200 text-sm font-mono disabled:bg-transparent" />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Histórico de Propostas</h4>
+                  {propostas.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic bg-slate-50 p-4 rounded-xl text-center border border-dashed">Nenhuma proposta gerada.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {propostas.map((prop) => (
+                        <div key={prop.id} className="p-4 border border-slate-100 rounded-2xl bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white transition-all">
+                          <div>
+                            <div className="text-base font-black text-slate-900">{prop.valor_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                            <div className="text-xs text-slate-400 font-mono mt-0.5">{prop.potencia_kwp} kWp • {new Date(prop.created_at).toLocaleDateString('pt-BR')}</div>
+                          </div>
+                          <div className="flex items-center gap-1 bg-white border border-slate-200/60 rounded-xl p-1 shrink-0">
+                            <button onClick={() => handlePreviewPDF(prop)} className="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg"><Eye className="w-4 h-4" /></button>
+                            <button onClick={() => handleBaixarPDF(prop)} className="p-1.5 text-slate-500 hover:text-green-600 rounded-lg"><Download className="w-4 h-4" /></button>
+                            <button onClick={() => handleReenviarEmail(prop)} className="p-1.5 text-slate-500 hover:text-amber-600 rounded-lg"><Mail className="w-4 h-4" /></button>
+                            <div className="w-px h-4 bg-slate-200 mx-1" />
+                            <button onClick={() => handleExcluirProposta(prop.id)} className="p-1.5 text-slate-300 hover:text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Botão de Excluir Integrado - Só aparece no modo de edição */}
+              {modoEdicao && (
+                <div className="pt-4 border-t border-slate-100 mt-8">
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={handleExcluirCliente}
+                    className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl py-3 font-semibold text-sm shadow-xs transition-all active:scale-[0.99] disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {isPending ? 'Excluindo registro...' : 'Excluir Cliente Permanentemente'}
+                  </button>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* BOTÃO VISUAL CONDICIONAL: Aparece no rodapé apenas se o modoEdicao for verdadeiro */}
-          {modoEdicao && (
-            <div className="pt-4 border-t border-slate-100 mt-8">
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={handleExcluirCliente}
-                className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl py-3 font-semibold text-sm shadow-xs transition-all active:scale-[0.99] disabled:opacity-50"
-              >
-                <Trash2 className="w-4 h-4" />
-                {isPending ? 'Excluindo registro...' : 'Excluir Cliente Permanentemente'}
-              </button>
+            </>
+          ) : (
+            /* CONTEÚDO DA ABA: DOCUMENTOS */
+            <div className="h-full">
+              <div className="mb-4">
+                <h3 className="font-bold text-slate-800">Repositório de Arquivos</h3>
+                <p className="text-xs text-slate-500">Faça o upload de laudos, faturas e contas associadas a este cliente.</p>
+              </div>
+              <RepositorioCliente clienteId={clienteId} />
             </div>
           )}
+
         </div>
       )}
     </div>
