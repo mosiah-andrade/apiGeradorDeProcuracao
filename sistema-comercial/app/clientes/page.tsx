@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Search, Mail, Phone, MapPin, FilePieChart } from 'lucide-react';
 import { NovoClienteModal } from '../components/NovoClienteModal';
-import { FichaClienteDrawer } from '../components/FichaClienteDrawer';
+import { FichaClienteDrawer } from '../components/FichaClienteDrawer/FichaClienteDrawer';
 import { ModalGerarPropostaSolar } from '../components/ModalGerarPropostaSolar';
 
 interface Cliente {

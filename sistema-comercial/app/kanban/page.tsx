@@ -9,7 +9,7 @@ import { KanbanColumn } from '../components/KanbanColumn';
 import { KanbanSkeleton } from '../components/KanbanSkeleton';
 import { KanbanOrphanColumn } from '../components/KanbanOrphanColumn';
 import { KanbanConfigPanel } from '../components/KanbanConfigPanel';
-import { FichaClienteDrawer } from '../components/FichaClienteDrawer';
+import { FichaClienteDrawer } from '../components/FichaClienteDrawer/FichaClienteDrawer';
 import { ModalGerarPropostaSolar } from '../components/ModalGerarPropostaSolar';
 import { NovoClienteModal } from '../components/NovoClienteModal';
 
