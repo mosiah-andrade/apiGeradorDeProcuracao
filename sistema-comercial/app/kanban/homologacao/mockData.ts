@@ -7,6 +7,7 @@ export interface HomologacaoStatus {
 
 export interface HomologacaoCard {
   id: string;
+  integradorId: string;
   nome: string;
   email: string | null;
   telefone: string | null;
@@ -42,6 +43,10 @@ export interface HomologacaoCard {
   equipamentos: HomologacaoEquipamento[];
   datasheets: string[];
   checklist: HomologacaoChecklistItem[];
+  camposAdicionais: HomologacaoCampoAdicional[];
+  beneficiarias: HomologacaoBeneficiaria[];
+  metodoRateio: "prioridade" | "porcentagem";
+  documentosUploads: HomologacaoDocumentoUpload[];
 }
 
 export interface HomologacaoEquipamento {
@@ -54,6 +59,45 @@ export interface HomologacaoChecklistItem {
   id: string;
   label: string;
   done: boolean;
+}
+
+export interface HomologacaoCampoAdicional {
+  id: string;
+  nome: string;
+  valor: string;
+}
+
+export interface HomologacaoBeneficiaria {
+  id: string;
+  nome: string;
+  unidadeConsumidora: string;
+  prioridade: number;
+  porcentagem: number;
+}
+
+export interface HomologacaoIntegrador {
+  id: string;
+  nome: string;
+  contato: string;
+  linkAcesso: string;
+}
+
+export interface HomologacaoDocumentoConfig {
+  id: string;
+  nome: string;
+  tipo: "pdf" | "foto";
+  obrigatorio: boolean;
+  ativo: boolean;
+}
+
+export interface HomologacaoDocumentoUpload {
+  id: string;
+  projetoId: string;
+  documentoConfigId: string | null;
+  nome: string;
+  tipo: string;
+  storagePath: string;
+  createdAt: string;
 }
 
 export interface HomologacaoDatasheet {
@@ -94,9 +138,62 @@ export const homologacaoColunasMock: HomologacaoStatus[] = [
   },
 ];
 
+export const checklistPadraoHomologacao: HomologacaoChecklistItem[] = [
+  { id: "conta", label: "Conta de luz anexada", done: false },
+  { id: "demanda", label: "Calculo de demanda validado", done: false },
+  { id: "procuracao", label: "Procuracao gerada", done: false },
+  { id: "datasheets", label: "Datasheets selecionados", done: false },
+];
+
+export const homologacaoIntegradoresMock: HomologacaoIntegrador[] = [
+  {
+    id: "integrador-asa",
+    nome: "Projetos Diretos",
+    contato: "operacao@asaweb.com",
+    linkAcesso: "https://homologacao.local/integrador/integrador-asa",
+  },
+  {
+    id: "integrador-solprime",
+    nome: "SolPrime Integracao",
+    contato: "projetos@solprime.com",
+    linkAcesso: "https://homologacao.local/integrador/integrador-solprime",
+  },
+  {
+    id: "integrador-voltmais",
+    nome: "VoltMais Energia",
+    contato: "homologacao@voltmais.com",
+    linkAcesso: "https://homologacao.local/integrador/integrador-voltmais",
+  },
+];
+
+export const homologacaoDocumentosMock: HomologacaoDocumentoConfig[] = [
+  {
+    id: "doc-conta",
+    nome: "Conta de luz atualizada",
+    tipo: "pdf",
+    obrigatorio: true,
+    ativo: true,
+  },
+  {
+    id: "doc-procuracao",
+    nome: "Procuracao assinada",
+    tipo: "pdf",
+    obrigatorio: true,
+    ativo: true,
+  },
+  {
+    id: "doc-fachada",
+    nome: "Foto do padrao de entrada",
+    tipo: "foto",
+    obrigatorio: false,
+    ativo: true,
+  },
+];
+
 export const homologacaoCardsMock: HomologacaoCard[] = [
   {
     id: "hom-1",
+    integradorId: "integrador-asa",
     nome: "Projeto Joao Silva",
     email: "joao.silva@email.com",
     telefone: "(11) 99999-1100",
@@ -140,9 +237,18 @@ export const homologacaoCardsMock: HomologacaoCard[] = [
       { id: "procuracao", label: "Procuracao gerada", done: false },
       { id: "datasheets", label: "Datasheets selecionados", done: false },
     ],
+    camposAdicionais: [
+      { id: "campo-1", nome: "Codigo interno", valor: "ASA-1042" },
+    ],
+    beneficiarias: [
+      { id: "ben-1", nome: "Residencia principal", unidadeConsumidora: "UC 10445520", prioridade: 1, porcentagem: 100 },
+    ],
+    metodoRateio: "porcentagem",
+    documentosUploads: [],
   },
   {
     id: "hom-2",
+    integradorId: "integrador-solprime",
     nome: "Mercado Central - 42kWp",
     email: "engenharia@mercadocentral.com",
     telefone: "(19) 3333-4200",
@@ -186,9 +292,19 @@ export const homologacaoCardsMock: HomologacaoCard[] = [
       { id: "procuracao", label: "Procuracao gerada", done: false },
       { id: "datasheets", label: "Datasheets selecionados", done: false },
     ],
+    camposAdicionais: [
+      { id: "campo-2", nome: "Vendedor do integrador", valor: "Camila" },
+    ],
+    beneficiarias: [
+      { id: "ben-2", nome: "Loja matriz", unidadeConsumidora: "UC 99241031", prioridade: 1, porcentagem: 70 },
+      { id: "ben-3", nome: "Deposito", unidadeConsumidora: "UC 99241032", prioridade: 2, porcentagem: 30 },
+    ],
+    metodoRateio: "porcentagem",
+    documentosUploads: [],
   },
   {
     id: "hom-3",
+    integradorId: "integrador-voltmais",
     nome: "Projeto Maria Souza",
     email: "maria.souza@email.com",
     telefone: "(31) 98888-2211",
@@ -232,9 +348,16 @@ export const homologacaoCardsMock: HomologacaoCard[] = [
       { id: "procuracao", label: "Procuracao gerada", done: true },
       { id: "datasheets", label: "Datasheets selecionados", done: false },
     ],
+    camposAdicionais: [],
+    beneficiarias: [
+      { id: "ben-4", nome: "Unidade consumidora titular", unidadeConsumidora: "UC 5510287", prioridade: 1, porcentagem: 100 },
+    ],
+    metodoRateio: "prioridade",
+    documentosUploads: [],
   },
   {
     id: "hom-4",
+    integradorId: "integrador-solprime",
     nome: "Usina Solar LTDA - 75kWp",
     email: "operacoes@solarltda.com",
     telefone: "(47) 3444-7500",
@@ -278,9 +401,18 @@ export const homologacaoCardsMock: HomologacaoCard[] = [
       { id: "procuracao", label: "Procuracao gerada", done: true },
       { id: "datasheets", label: "Datasheets selecionados", done: false },
     ],
+    camposAdicionais: [
+      { id: "campo-4", nome: "Observacao concessionaria", valor: "Cliente pediu protocolo urgente" },
+    ],
+    beneficiarias: [
+      { id: "ben-5", nome: "Usina Solar LTDA", unidadeConsumidora: "UC 77001942", prioridade: 1, porcentagem: 100 },
+    ],
+    metodoRateio: "porcentagem",
+    documentosUploads: [],
   },
   {
     id: "hom-5",
+    integradorId: "integrador-voltmais",
     nome: "Condominio Vista Norte",
     email: "sindico@vistanorte.com",
     telefone: "(21) 3777-9000",
@@ -324,5 +456,12 @@ export const homologacaoCardsMock: HomologacaoCard[] = [
       { id: "procuracao", label: "Procuracao gerada", done: false },
       { id: "datasheets", label: "Datasheets selecionados", done: false },
     ],
+    camposAdicionais: [],
+    beneficiarias: [
+      { id: "ben-6", nome: "Torre A", unidadeConsumidora: "UC 88912045", prioridade: 1, porcentagem: 60 },
+      { id: "ben-7", nome: "Torre B", unidadeConsumidora: "UC 88912046", prioridade: 2, porcentagem: 40 },
+    ],
+    metodoRateio: "porcentagem",
+    documentosUploads: [],
   },
 ];
