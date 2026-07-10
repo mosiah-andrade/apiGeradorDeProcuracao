@@ -1,4 +1,2 @@
-CREATE POLICY "Permitir exclusao de campos" ON config_campos_repositorio
-FOR DELETE
-TO authenticated -- ou 'anon' se você estiver usando acesso público
-USING (true);
+-- Exemplo de como forçar o esquema
+ALTER TABLE public.NOME_DA_SUA_TABELA ADD COLUMN tab_type TEXT DEFAULT 'commercial';

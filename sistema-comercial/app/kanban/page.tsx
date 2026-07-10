@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Settings } from 'lucide-react';
+import { ClipboardCheck, Plus, Settings, Users } from 'lucide-react';
 
 // Importações dos componentes
-import { KanbanColumn } from '../components/KanbanColumn';
-import { KanbanSkeleton } from '../components/KanbanSkeleton';
-import { KanbanOrphanColumn } from '../components/KanbanOrphanColumn';
-import { KanbanConfigPanel } from '../components/KanbanConfigPanel';
+import { KanbanColumn } from './components/KanbanColumn';
+import { KanbanSkeleton } from './components/KanbanSkeleton';
+import { KanbanOrphanColumn } from './components/KanbanOrphanColumn';
+import { KanbanConfigPanel } from './components/KanbanConfigPanel';
 import { FichaClienteDrawer } from '../components/FichaClienteDrawer/FichaClienteDrawer';
 import { ModalGerarPropostaSolar } from '../components/ModalGerarPropostaSolar';
 import { NovoClienteModal } from '../components/NovoClienteModal';
+import { HomologacaoKanban } from './homologacao/HomologacaoKanban';
 
 interface StatusColuna {
   id: string;
@@ -35,6 +36,7 @@ const colunasProtegidas = ['novo lead', 'em negociação', 'proposta enviada', '
 
 export default function KanbanPage() {
   const supabase = createClient();
+  const [abaAtiva, setAbaAtiva] = useState<'comercial' | 'homologacao'>('comercial');
   const [colunas, setColunas] = useState<StatusColuna[]>([]);
   const [clientes, setClientes] = useState<ClienteCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,6 +194,39 @@ export default function KanbanPage() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setAbaAtiva('comercial')}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+              abaAtiva === 'comercial'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Comercial
+          </button>
+          <button
+            type="button"
+            onClick={() => setAbaAtiva('homologacao')}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+              abaAtiva === 'homologacao'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            Homologacao
+          </button>
+        </div>
+      </div>
+
+      {abaAtiva === 'homologacao' ? (
+        <HomologacaoKanban />
+      ) : (
+        <>
       {/* HEADER DA PÁGINA */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 max-w-7xl mx-auto">
         <div>
@@ -263,6 +298,8 @@ export default function KanbanPage() {
         onClose={() => setIsNovoClienteModalOpen(false)}
         onSuccess={carregarDadosKanban} 
       />
+        </>
+      )}
     </div>
   );
 }
