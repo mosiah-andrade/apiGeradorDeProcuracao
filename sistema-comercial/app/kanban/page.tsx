@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ClipboardCheck, Plus, Settings, Users } from 'lucide-react';
 
@@ -46,6 +46,40 @@ export default function KanbanPage() {
   const [clienteSelecionadoFichaId, setClienteSelecionadoFichaId] = useState<string | null>(null);
   const [clienteParaProposta, setClienteParaProposta] = useState<any | null>(null);
   const [isNovoClienteModalOpen, setIsNovoClienteModalOpen] = useState(false);
+
+  // Ref para o container horizontal do kanban (usado para auto-scroll durante drag)
+  const boardRef = useRef<HTMLDivElement | null>(null);
+
+  // Faz auto-scroll horizontal quando o cursor de drag aproxima-se das bordas do container
+  function handleBoardDragOver(e: React.DragEvent<HTMLDivElement>) {
+    // Evita comportamento padrão e permite drop
+    e.preventDefault();
+
+    const el = boardRef.current;
+    if (!el) return;
+
+    // Só ativa para drag de cards (ou quando houver dados JSON no dataTransfer)
+    try {
+      const types = Array.from((e.dataTransfer?.types ?? []) as ArrayLike<unknown>);
+      if (types.length > 0 && !types.includes('application/json')) {
+        // se não tiver o tipo que usamos, ignora (proteção mínima)
+        return;
+      }
+    } catch (err) {
+      // se falhar ao ler types, continua (não bloqueia a rolagem)
+    }
+
+    const rect = el.getBoundingClientRect();
+    const threshold = 60; // px a partir das bordas para iniciar o scroll
+    const scrollStep = 18; // quanto deslocar por evento
+
+    // quando qualquer parte tocar a lateral: avaliamos posição do ponteiro
+    if (e.clientX - rect.left < threshold) {
+      el.scrollLeft = Math.max(0, el.scrollLeft - scrollStep);
+    } else if (rect.right - e.clientX < threshold) {
+      el.scrollLeft = el.scrollLeft + scrollStep;
+    }
+  }
 
   // === LÓGICA DE DADOS (Restaurada) ===
   async function carregarDadosKanban() {
@@ -261,7 +295,7 @@ export default function KanbanPage() {
       )}
 
       {/* ÁREA DO KANBAN */}
-      <div className="flex gap-4 overflow-x-auto pb-4 max-w-7xl mx-auto items-start">
+      <div ref={boardRef} onDragOver={handleBoardDragOver} className="flex gap-4 overflow-x-auto pb-4 max-w-7xl mx-auto items-start">
         {colunas.map((coluna, index) => (
           <KanbanColumn
             key={coluna.id}
