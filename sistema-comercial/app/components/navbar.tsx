@@ -64,20 +64,20 @@ export default async function Navbar() {
               >
                 <Link
                   href="/clientes"
-                  className="block px-4 py-3 text-sm hover:bg-slate-100"
+                  className="block px-4 py-3 text-sm hover:bg-blue-100 text-gray-900 hover:font-bold"
                 >
                   Clientes
                 </Link>
 
                 <Link
                   href="/datasheets"
-                  className="block px-4 py-3 text-sm hover:bg-slate-100"
+                  className="block px-4 py-3 text-sm hover:bg-blue-100 text-gray-900 hover:font-bold"
                 >
                   Datasheets
                 </Link>
                 <Link
                   href="/kanban"
-                  className="block px-4 py-3 text-sm hover:bg-slate-100"
+                  className="block px-4 py-3 text-sm hover:bg-blue-100 text-gray-900 hover:font-bold"
                 >
                   Kanban
                 </Link>

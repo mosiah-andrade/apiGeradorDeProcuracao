@@ -58,7 +58,7 @@ export default function MobileMenu({ isPro }: { isPro: boolean }) {
               </button>
 
               {isProOpen && (
-                <div className="mt-3 ml-4 flex flex-col gap-3 border-l-2 border-slate-200 pl-4">
+                <div className="mt-3 flex flex-col gap-3 border-l-2 border-slate-200 pl-3">
                   <Link
                     href="/clientes"
                     onClick={() => {
