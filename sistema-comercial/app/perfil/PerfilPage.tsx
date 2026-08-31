@@ -45,9 +45,9 @@ export default function PerfilPage({ perfilInicial }: { perfilInicial: any }) {
   )
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header Fixo/Flutuante */}
-      <div className="sticky top-0 z-10 bg-[#F8FAFC]/80 backdrop-blur-md border-b border-slate-200/60 mb-8">
+      <div className="sticky top-0 z-10 bg-slate-50/80 backdrop-blur-md border-b border-slate-200/60 mb-8">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-200">

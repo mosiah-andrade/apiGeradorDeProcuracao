@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Check, ClipboardCheck, Copy, ExternalLink, FileText, Image as ImageIcon, Mail, Plus, Search, Settings, Store, Trash2, X } from "lucide-react";
 
 import { KanbanColumn } from "../components/KanbanColumn";
@@ -43,6 +44,7 @@ export function HomologacaoKanban() {
     cadastrarDatasheet,
     criarIntegrador,
     criarProjetoManual,
+    excluirProjeto,
     criarDocumentoPortal,
     alternarDocumentoPortal,
     alternarObrigatoriedadeDocumentoPortal,
@@ -127,6 +129,18 @@ export function HomologacaoKanban() {
     if (!integradorAtivo) return;
     const novoProjetoId = criarProjetoManual(integradorAtivo.id);
     setClienteSelecionadoId(novoProjetoId);
+    toast.success("Novo projeto criado.");
+  }
+
+  async function handleExcluirProjeto(clienteId: string) {
+    if (!confirm("Excluir este projeto e todos os seus anexos? Esta ação não pode ser desfeita.")) return;
+    const excluido = await excluirProjeto(clienteId);
+    if (excluido) {
+      setClienteSelecionadoId(null);
+      toast.success("Projeto excluído com sucesso.");
+    } else {
+      toast.error("Não foi possível excluir o projeto.");
+    }
   }
 
   function handleCriarDocumento(event: React.FormEvent) {
@@ -470,6 +484,7 @@ export function HomologacaoKanban() {
         gerandoProcuracao={gerandoProcuracaoId === clienteSelecionado?.id}
         documentosPortal={documentosPortal}
         onClose={() => setClienteSelecionadoId(null)}
+        onExcluirProjeto={handleExcluirProjeto}
         onClienteChange={atualizarCliente}
         onRecalcularDemanda={recalcularDemanda}
         onGerarProcuracao={gerarProcuracao}

@@ -1,9 +1,8 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { CheckCircle2, Clock3, FileUp, Image as ImageIcon, Send, SolarPanel, UserRound } from "lucide-react";
-
-import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import {
   checklistPadraoHomologacao,
   type HomologacaoDocumentoConfig,
@@ -20,6 +19,14 @@ interface NovoProjetoPortal {
   titular: string;
   email: string;
   telefone: string;
+  cpfCnpj: string;
+  rg: string;
+  orgaoEmissor: string;
+  endereco: string;
+  bairro: string;
+  cep: string;
+  cidade: string;
+  estado: string;
   unidadeConsumidora: string;
   concessionaria: string;
   potenciaKWp: string;
@@ -30,6 +37,14 @@ const formularioInicial: NovoProjetoPortal = {
   titular: "",
   email: "",
   telefone: "",
+  cpfCnpj: "",
+  rg: "",
+  orgaoEmissor: "",
+  endereco: "",
+  bairro: "",
+  cep: "",
+  cidade: "",
+  estado: "",
   unidadeConsumidora: "",
   concessionaria: "",
   potenciaKWp: "",
@@ -135,15 +150,15 @@ export default function PortalIntegradorPage({
   params: Promise<{ integradorId: string }>;
   searchParams: Promise<{ nome?: string; contato?: string; docs?: string }>;
 }) {
-  const supabase = useMemo(() => createClient(), []);
   const { integradorId } = use(params);
-  use(searchParams);
+  const { token = "" } = use(searchParams);
   const [integrador, setIntegrador] = useState<(HomologacaoIntegrador & { user_id?: string }) | null>(null);
   const [documentosSolicitados, setDocumentosSolicitados] = useState<HomologacaoDocumentoConfig[]>([]);
   const [statusDisponiveis, setStatusDisponiveis] = useState<HomologacaoStatus[]>([]);
   const [projetos, setProjetos] = useState<HomologacaoCard[]>([]);
   const [formulario, setFormulario] = useState<NovoProjetoPortal>(formularioInicial);
   const [arquivos, setArquivos] = useState<Record<string, File | null>>({});
+  const [arquivosExtras, setArquivosExtras] = useState<File[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
 
@@ -151,47 +166,19 @@ export default function PortalIntegradorPage({
     setCarregando(true);
 
     try {
-      const { data: integradorData, error: integradorError } = await supabase
-        .from("homologacao_integradores")
-        .select("id, user_id, nome, contato")
-        .eq("id", integradorId)
-        .single();
-
-      if (integradorError) throw integradorError;
-
-      const [documentosResult, statusResult, projetosResult] = await Promise.all([
-        supabase
-          .from("homologacao_documentos_config")
-          .select("id, nome, tipo, obrigatorio, ativo")
-          .eq("user_id", integradorData.user_id)
-          .eq("ativo", true)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("homologacao_status")
-          .select("id, nome, cor, ordem")
-          .eq("user_id", integradorData.user_id)
-          .order("ordem", { ascending: true }),
-        supabase
-          .from("homologacao_projetos")
-          .select("*")
-          .eq("integrador_id", integradorId)
-          .order("created_at", { ascending: false }),
-      ]);
-
-      if (documentosResult.error) throw documentosResult.error;
-      if (statusResult.error) throw statusResult.error;
-      if (projetosResult.error) throw projetosResult.error;
-
-      setIntegrador({
-        id: integradorData.id,
-        nome: integradorData.nome,
-        contato: integradorData.contato || "",
-        linkAcesso: `/integrador/${integradorData.id}`,
-        user_id: integradorData.user_id,
-      });
-      setDocumentosSolicitados((documentosResult.data || []) as HomologacaoDocumentoConfig[]);
-      setStatusDisponiveis((statusResult.data || []) as HomologacaoStatus[]);
-      setProjetos((projetosResult.data || []).map(projetoDoBanco));
+      const resposta = await fetch(`/api/portal-integrador/${integradorId}?token=${encodeURIComponent(token)}`, { cache: "no-store" });
+      if (!resposta.ok) throw new Error("Portal não encontrado");
+      const dados = await resposta.json();
+      setIntegrador({ id: integradorId, nome: dados.integrador.nome, contato: dados.integrador.contato, linkAcesso: "" });
+      setDocumentosSolicitados(dados.documentos || []);
+      const nomesDeStatus = new Set<string>();
+      setStatusDisponiveis((dados.status || []).filter((status: HomologacaoStatus) => {
+        const nome = status.nome.trim().toLowerCase();
+        if (nomesDeStatus.has(nome)) return false;
+        nomesDeStatus.add(nome);
+        return true;
+      }));
+      setProjetos((dados.projetos || []).map(projetoDoBanco));
     } catch (error) {
       console.error("Erro ao carregar portal do integrador:", error);
       setIntegrador(null);
@@ -205,7 +192,14 @@ export default function PortalIntegradorPage({
     void carregarPortal();
     // Portal publico sincroniza os dados do Supabase ao abrir o link.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [integradorId, supabase]);
+  }, [integradorId, token]);
+
+  useEffect(() => {
+    const intervalo = window.setInterval(() => void carregarPortal(), 30_000);
+    return () => window.clearInterval(intervalo);
+    // Atualiza o acompanhamento quando o homologador altera o status.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [integradorId, token]);
 
   if (carregando) {
     return (
@@ -234,71 +228,31 @@ export default function PortalIntegradorPage({
 
   async function enviarProjeto(event: React.FormEvent) {
     event.preventDefault();
-    if (!integrador?.user_id || enviando) return;
-
-    const statusRecebido =
-      statusDisponiveis.find(status => status.nome.toLowerCase().trim() === "recebido") ||
-      statusDisponiveis[0];
+    if (enviando) return;
 
     setEnviando(true);
 
     try {
-      const { data: projetoCriado, error: projetoError } = await supabase
-        .from("homologacao_projetos")
-        .insert({
-          user_id: integrador.user_id,
-          integrador_id: integradorId,
-          nome: formulario.nome || "Projeto enviado pelo integrador",
-          email: formulario.email || null,
-          telefone: formulario.telefone || null,
-          status_id: statusRecebido?.id || null,
-          concessionaria: formulario.concessionaria,
-          unidade_consumidora: formulario.unidadeConsumidora,
-          titular: formulario.titular,
-          potencia_kwp: Number(formulario.potenciaKWp) || 0,
-          prazo: "Recebido pelo portal",
-          responsavel: "Homologador",
-          checklist: checklistPadraoHomologacao.map(item => ({ ...item })),
-          campos_adicionais: [{ id: "origem", nome: "Origem", valor: "Portal do integrador" }],
-        })
-        .select("*")
-        .single();
-
-      if (projetoError) throw projetoError;
-
-      const arquivosSelecionados = Object.entries(arquivos).filter(([, arquivo]) => Boolean(arquivo));
-
-      for (const [documentoId, arquivo] of arquivosSelecionados) {
-        if (!arquivo) continue;
-        const documento = documentosSolicitados.find(item => item.id === documentoId);
-        const extensao = arquivo.name.split(".").pop() || "bin";
-        const caminho = `${integradorId}/${projetoCriado.id}/${documentoId}-${Date.now()}.${extensao}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("homologacao-documentos")
-          .upload(caminho, arquivo);
-
-        if (uploadError) throw uploadError;
-
-        const { error: registroError } = await supabase.from("homologacao_documentos_uploads").insert({
-          user_id: integrador.user_id,
-          integrador_id: integradorId,
-          projeto_id: projetoCriado.id,
-          documento_config_id: documentoId,
-          nome: documento?.nome || arquivo.name,
-          tipo: documento?.tipo || arquivo.type || "arquivo",
-          storage_path: caminho,
-        });
-
-        if (registroError) throw registroError;
-      }
-
-      setProjetos(projetosAtuais => [projetoDoBanco(projetoCriado), ...projetosAtuais]);
+      const dados = new FormData();
+      dados.set("token", token);
+      Object.entries(formulario).forEach(([chave, valor]) => dados.set(chave, valor));
+      dados.set("camposAdicionais", JSON.stringify([{ id: "origem", nome: "Origem", valor: "Portal do integrador" }]));
+      dados.set("beneficiarias", "[]");
+      Object.entries(arquivos).forEach(([documentoId, arquivo]) => {
+        if (arquivo) dados.append("arquivo", new File([arquivo], `${documentoId}__${arquivo.name}`, { type: arquivo.type }));
+      });
+      arquivosExtras.forEach(arquivo => dados.append("arquivo", new File([arquivo], `extra__${arquivo.name}`, { type: arquivo.type })));
+      const resposta = await fetch(`/api/portal-integrador/${integradorId}`, { method: "POST", body: dados });
+      const retorno = await resposta.json();
+      if (!resposta.ok) throw new Error(retorno.erro);
+      setProjetos([{ id: retorno.projeto.id, integradorId, nome: retorno.projeto.nome, email: null, telefone: null, status_id: retorno.projeto.status_id, cidade: null, estado: null, cpfCnpj: "", rg: "", orgaoEmissor: "", endereco: "", bairro: "", cep: "", concessionaria: formulario.concessionaria, cidadeConcessionaria: "", cnpjConcessionaria: "", unidadeConsumidora: formulario.unidadeConsumidora, titular: formulario.titular, representante: "", cpfRepresentante: "", contratadoNome: "", contratadoCpf: "", contratadoRg: "", contratadoOrgaoEmissor: "", contratadoEndereco: "", consumoMedioKwh: 0, potenciaKWp: Number(formulario.potenciaKWp) || 0, demandaCalculadaKw: 0, tipoLigacao: "Bifasico", protocolo: null, prazo: retorno.projeto.prazo, responsavel: "", procuracaoGerada: false, equipamentos: [], datasheets: [], checklist: [], camposAdicionais: [], beneficiarias: [], metodoRateio: "porcentagem", documentosUploads: [] }]);
       setFormulario(formularioInicial);
       setArquivos({});
+      setArquivosExtras([]);
+      toast.success("Projeto recebido com sucesso.", { description: "Ele já está disponível para homologação." });
     } catch (error) {
       console.error("Erro ao enviar projeto:", error);
-      alert("Nao foi possivel enviar o projeto. Tente novamente.");
+      toast.error("Não foi possível enviar o projeto.", { description: "Revise os dados e tente novamente." });
     } finally {
       setEnviando(false);
     }
@@ -330,11 +284,25 @@ export default function PortalIntegradorPage({
             <FileUp className="h-5 w-5 text-emerald-700" />
             <h2 className="font-bold text-slate-800">Enviar novo projeto</h2>
           </div>
+          <div className="mb-4 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
+            <span className="text-sm font-semibold text-blue-800">Status inicial do projeto</span>
+            <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white">
+              {statusDisponiveis.find(status => status.nome.toLowerCase().trim() === "recebido")?.nome || "Recebido"}
+            </span>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <PortalInput label="Projeto" value={formulario.nome} onChange={valor => atualizarFormulario("nome", valor)} required />
             <PortalInput label="Titular" value={formulario.titular} onChange={valor => atualizarFormulario("titular", valor)} required />
             <PortalInput label="E-mail" value={formulario.email} onChange={valor => atualizarFormulario("email", valor)} />
             <PortalInput label="Telefone" value={formulario.telefone} onChange={valor => atualizarFormulario("telefone", valor)} />
+            <PortalInput label="CPF/CNPJ" value={formulario.cpfCnpj} onChange={valor => atualizarFormulario("cpfCnpj", valor)} required />
+            <PortalInput label="RG" value={formulario.rg} onChange={valor => atualizarFormulario("rg", valor)} />
+            <PortalInput label="Órgão emissor" value={formulario.orgaoEmissor} onChange={valor => atualizarFormulario("orgaoEmissor", valor)} />
+            <PortalInput label="CEP" value={formulario.cep} onChange={valor => atualizarFormulario("cep", valor)} />
+            <PortalInput label="Endereço" value={formulario.endereco} onChange={valor => atualizarFormulario("endereco", valor)} required />
+            <PortalInput label="Bairro" value={formulario.bairro} onChange={valor => atualizarFormulario("bairro", valor)} />
+            <PortalInput label="Cidade" value={formulario.cidade} onChange={valor => atualizarFormulario("cidade", valor)} required />
+            <PortalInput label="Estado" value={formulario.estado} onChange={valor => atualizarFormulario("estado", valor)} />
             <PortalInput label="Unidade consumidora" value={formulario.unidadeConsumidora} onChange={valor => atualizarFormulario("unidadeConsumidora", valor)} required />
             <PortalInput label="Concessionaria" value={formulario.concessionaria} onChange={valor => atualizarFormulario("concessionaria", valor)} />
             <PortalInput label="Potencia kWp" value={formulario.potenciaKWp} onChange={valor => atualizarFormulario("potenciaKWp", valor)} type="number" />
@@ -385,6 +353,12 @@ export default function PortalIntegradorPage({
                   Nenhuma documentacao foi solicitada.
                 </div>
               )}
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-blue-200 bg-blue-50 p-3">
+                <span className="text-sm font-semibold text-blue-800">Anexos complementares</span>
+                <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-blue-700">Adicionar arquivos</span>
+                <input type="file" multiple onChange={event => setArquivosExtras(Array.from(event.target.files || []))} className="hidden" />
+              </label>
+              {arquivosExtras.length > 0 && <p className="text-xs font-medium text-slate-500">{arquivosExtras.length} anexo(s) complementar(es) selecionado(s).</p>}
             </div>
           </div>
 
@@ -413,7 +387,7 @@ export default function PortalIntegradorPage({
                         {projeto.titular || "Titular pendente"}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: status?.cor || "#64748b" }}>
+                    <span className="shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: status?.cor || "var(--color-neutral-500)" }}>
                       {status?.nome || "Sem status"}
                     </span>
                   </div>

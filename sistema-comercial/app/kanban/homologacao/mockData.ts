@@ -80,6 +80,7 @@ export interface HomologacaoIntegrador {
   nome: string;
   contato: string;
   linkAcesso: string;
+  portalToken?: string;
 }
 
 export interface HomologacaoDocumentoConfig {

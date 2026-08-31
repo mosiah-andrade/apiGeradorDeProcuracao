@@ -63,7 +63,7 @@ export default async function PlanosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-20 px-4">
+    <div className="min-h-screen bg-slate-50 py-20 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16 space-y-4">
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">

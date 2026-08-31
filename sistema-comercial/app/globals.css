@@ -1,33 +1,187 @@
 @import "tailwindcss";
 
+/* Altere as cores de interface somente nesta paleta global. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  input::placeholder {
-    color: rgba(0, 0, 0, 0.541);
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-foreground: #0f172a;
+  --color-foreground-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-placeholder: #64748b;
 
-  }
-  input{
-    color: black !important;
-  }
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Reservado para alertas e chamadas que realmente precisem de atenção. */
+  --color-attention-50: #fff7ed;
+  --color-attention-100: #ffedd5;
+  --color-attention-200: #fed7aa;
+  --color-attention-400: #fb923c;
+  --color-attention-500: #f97316;
+  --color-attention-600: #ea580c;
+  --color-attention-700: #c2410c;
+
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  --color-accent-50: #f0fdfa;
+  --color-accent-500: #06b6d4;
+  --color-accent-600: #0891b2;
+  --color-accent-700: #0f766e;
+  --color-accent-800: #155e75;
+
+  --color-highlight-100: #ede9fe;
+  --color-highlight-500: #8b5cf6;
+  --color-highlight-600: #7c3aed;
+  --color-highlight-700: #6d28d9;
+  --color-highlight-800: #5b21b6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-white: var(--color-surface);
+  --color-black: var(--color-neutral-950);
+
+  --color-blue-50: var(--color-primary-50);
+  --color-blue-100: var(--color-primary-100);
+  --color-blue-200: var(--color-primary-200);
+  --color-blue-400: var(--color-primary-400);
+  --color-blue-500: var(--color-primary-500);
+  --color-blue-600: var(--color-primary-600);
+  --color-blue-700: var(--color-primary-700);
+  --color-blue-800: var(--color-primary-800);
+  --color-blue-900: var(--color-primary-900);
+
+  /* Compatibilidade: usos antigos de amber/orange agora seguem a paleta azul. */
+  --color-amber-50: var(--color-primary-50);
+  --color-amber-100: var(--color-primary-100);
+  --color-amber-200: var(--color-primary-200);
+  --color-amber-300: var(--color-primary-200);
+  --color-amber-400: var(--color-primary-400);
+  --color-amber-500: var(--color-primary-500);
+  --color-amber-600: var(--color-primary-600);
+  --color-amber-700: var(--color-primary-700);
+  --color-amber-800: var(--color-primary-800);
+  --color-amber-900: var(--color-primary-900);
+  --color-amber-950: var(--color-primary-900);
+  --color-orange-600: var(--color-primary-600);
+  --color-orange-700: var(--color-primary-700);
+
+  --color-attention-50: var(--color-attention-50);
+  --color-attention-100: var(--color-attention-100);
+  --color-attention-200: var(--color-attention-200);
+  --color-attention-400: var(--color-attention-400);
+  --color-attention-500: var(--color-attention-500);
+  --color-attention-600: var(--color-attention-600);
+  --color-attention-700: var(--color-attention-700);
+
+  --color-emerald-50: var(--color-success-50);
+  --color-emerald-100: var(--color-success-100);
+  --color-emerald-200: var(--color-success-200);
+  --color-emerald-300: var(--color-success-300);
+  --color-emerald-600: var(--color-success-600);
+  --color-emerald-700: var(--color-success-700);
+  --color-emerald-800: var(--color-success-800);
+  --color-green-100: var(--color-success-100);
+  --color-green-500: var(--color-success-500);
+  --color-green-600: var(--color-success-600);
+  --color-green-800: var(--color-success-800);
+
+  --color-red-50: var(--color-danger-50);
+  --color-red-100: var(--color-danger-100);
+  --color-red-200: var(--color-danger-200);
+  --color-red-300: var(--color-danger-300);
+  --color-red-400: var(--color-danger-400);
+  --color-red-500: var(--color-danger-500);
+  --color-red-600: var(--color-danger-600);
+  --color-red-700: var(--color-danger-700);
+  --color-red-800: var(--color-danger-800);
+  --color-red-900: var(--color-danger-900);
+
+  --color-slate-50: var(--color-neutral-50);
+  --color-slate-100: var(--color-neutral-100);
+  --color-slate-200: var(--color-neutral-200);
+  --color-slate-300: var(--color-neutral-300);
+  --color-slate-400: var(--color-neutral-400);
+  --color-slate-500: var(--color-neutral-500);
+  --color-slate-600: var(--color-neutral-600);
+  --color-slate-700: var(--color-neutral-700);
+  --color-slate-800: var(--color-neutral-800);
+  --color-slate-900: var(--color-neutral-900);
+  --color-slate-950: var(--color-neutral-950);
+  --color-gray-50: var(--color-neutral-50);
+  --color-gray-900: var(--color-neutral-900);
+  --color-zinc-50: var(--color-neutral-50);
+  --color-zinc-100: var(--color-neutral-100);
+  --color-zinc-200: var(--color-neutral-200);
+  --color-zinc-300: var(--color-neutral-300);
+  --color-zinc-400: var(--color-neutral-400);
+  --color-zinc-500: var(--color-neutral-500);
+  --color-zinc-600: var(--color-neutral-600);
+  --color-zinc-700: var(--color-neutral-700);
+  --color-zinc-800: var(--color-neutral-800);
+
+  --color-cyan-50: var(--color-accent-50);
+  --color-cyan-500: var(--color-accent-500);
+  --color-cyan-600: var(--color-accent-600);
+  --color-cyan-700: var(--color-accent-700);
+  --color-purple-100: var(--color-highlight-100);
+  --color-purple-500: var(--color-highlight-500);
+  --color-purple-600: var(--color-highlight-600);
+  --color-purple-700: var(--color-highlight-700);
+  --color-purple-800: var(--color-highlight-800);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+input {
+  color: var(--color-foreground) !important;
+}
+
+input::placeholder {
+  color: var(--color-placeholder);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-background);
+  color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

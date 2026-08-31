@@ -112,7 +112,7 @@ export function ModalGerarPropostaSolar({ cliente, onClose, onSuccess }: ModalGe
         </div>
 
         {/* Área Escrupulosa de Formulários */}
-        <div className="overflow-y-auto p-6 space-y-6 flex-1 bg-[#f8fafc]">
+        <div className="overflow-y-auto p-6 space-y-6 flex-1 bg-slate-50">
           
           {/* Passo 1: Injeta a sua calculadora oficial da NASA (CEP, Consumo, Potência Painel, Qtd Manual) */}
           <AnaliseTecnica onCalcular={handleCalculoFinalizado} />

@@ -45,6 +45,7 @@ interface HomologacaoDrawerProps {
   gerandoProcuracao: boolean;
   documentosPortal: HomologacaoDocumentoConfig[];
   onClose: () => void;
+  onExcluirProjeto: (clienteId: string) => void;
   onClienteChange: (cliente: HomologacaoCard) => void;
   onRecalcularDemanda: (clienteId: string) => void;
   onGerarProcuracao: (clienteId: string) => void;
@@ -71,6 +72,7 @@ export function HomologacaoDrawer({
   gerandoProcuracao,
   documentosPortal,
   onClose,
+  onExcluirProjeto,
   onClienteChange,
   onRecalcularDemanda,
   onGerarProcuracao,
@@ -219,14 +221,14 @@ export function HomologacaoDrawer({
               {cliente.concessionaria} - {cliente.unidadeConsumidora}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            aria-label="Fechar ficha"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => onExcluirProjeto(cliente.id)} className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50" aria-label="Excluir projeto">
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900" aria-label="Fechar ficha">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-6 px-6 py-6">

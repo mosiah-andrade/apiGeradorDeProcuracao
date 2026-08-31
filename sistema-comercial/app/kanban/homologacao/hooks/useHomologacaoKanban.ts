@@ -91,9 +91,10 @@ interface HomologacaoDocumentoUploadRow {
   storage_path: string;
 }
 
-function montarLinkIntegrador(id: string) {
-  if (typeof window === "undefined") return `/integrador/${id}`;
-  return `${window.location.origin}/integrador/${id}`;
+function montarLinkIntegrador(id: string, token?: string) {
+  const path = `/integrador/${id}${token ? `?token=${token}` : ""}`;
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
 }
 
 function asArray<T>(value: unknown): T[] {
@@ -300,7 +301,15 @@ export function useHomologacaoKanban() {
         documentosData = data || [];
       }
 
-      setColunas(statusData.map(coluna => ({
+      const nomesDeStatus = new Set<string>();
+      const statusUnicos = statusData.filter(coluna => {
+        const nome = coluna.nome.trim().toLowerCase();
+        if (nomesDeStatus.has(nome)) return false;
+        nomesDeStatus.add(nome);
+        return true;
+      });
+
+      setColunas(statusUnicos.map(coluna => ({
         id: coluna.id,
         nome: coluna.nome,
         cor: coluna.cor,
@@ -310,7 +319,8 @@ export function useHomologacaoKanban() {
         id: integrador.id,
         nome: integrador.nome,
         contato: integrador.contato || "",
-        linkAcesso: montarLinkIntegrador(integrador.id),
+        portalToken: integrador.portal_token,
+        linkAcesso: montarLinkIntegrador(integrador.id, integrador.portal_token),
       })));
       setDocumentosPortal(documentosData.map(documento => ({
         id: documento.id,
@@ -445,8 +455,10 @@ export function useHomologacaoKanban() {
       id,
       nome: nomeLimpo,
       contato: contato.trim(),
-      linkAcesso: montarLinkIntegrador(id),
+      portalToken: crypto.randomUUID(),
+      linkAcesso: "",
     };
+    novoIntegrador.linkAcesso = montarLinkIntegrador(id, novoIntegrador.portalToken);
 
     setIntegradores(integradoresAtuais => [...integradoresAtuais, novoIntegrador]);
 
@@ -457,6 +469,7 @@ export function useHomologacaoKanban() {
         user_id: session.user.id,
         nome: nomeLimpo,
         contato: contato.trim(),
+        portal_token: novoIntegrador.portalToken,
       });
       if (error) {
         console.error("Erro ao criar integrador:", error);
@@ -530,6 +543,26 @@ export function useHomologacaoKanban() {
     });
 
     return id;
+  }
+
+  async function excluirProjeto(clienteId: string) {
+    const cliente = clientes.find(item => item.id === clienteId);
+    if (!cliente) return false;
+
+    const caminhos = cliente.documentosUploads.map(documento => documento.storagePath);
+    if (caminhos.length > 0) {
+      const { error: storageError } = await supabase.storage.from("homologacao-documentos").remove(caminhos);
+      if (storageError) console.error("Erro ao remover anexos do projeto:", storageError);
+    }
+
+    const { error } = await supabase.from("homologacao_projetos").delete().eq("id", clienteId);
+    if (error) {
+      console.error("Erro ao excluir projeto:", error);
+      return false;
+    }
+
+    setClientes(clientesAtuais => clientesAtuais.filter(clienteAtual => clienteAtual.id !== clienteId));
+    return true;
   }
 
   async function criarDocumentoPortal(nome: string, tipo: HomologacaoDocumentoConfig["tipo"], obrigatorio: boolean) {
@@ -891,6 +924,7 @@ export function useHomologacaoKanban() {
     cadastrarDatasheet,
     criarIntegrador,
     criarProjetoManual,
+    excluirProjeto,
     criarDocumentoPortal,
     alternarDocumentoPortal,
     alternarObrigatoriedadeDocumentoPortal,

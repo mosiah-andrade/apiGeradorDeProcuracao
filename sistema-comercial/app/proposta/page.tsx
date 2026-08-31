@@ -67,7 +67,7 @@ if (error) {
   const limite = 10;
   const totalPropostas = propostasNoMes || 0;
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header Estruturado */}
