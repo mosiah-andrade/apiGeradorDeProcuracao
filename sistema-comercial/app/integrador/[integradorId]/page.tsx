@@ -148,7 +148,12 @@ export default function PortalIntegradorPage({
   searchParams,
 }: {
   params: Promise<{ integradorId: string }>;
-  searchParams: Promise<{ nome?: string; contato?: string; docs?: string }>;
+  searchParams: Promise<{
+  nome?: string;
+  contato?: string;
+  docs?: string;
+  token?: string;
+}>;
 }) {
   const { integradorId } = use(params);
   const { token = "" } = use(searchParams);
