@@ -17,6 +17,7 @@ export function KanbanCard({
 }: KanbanCardProps) {
   return (
     <div
+      data-kanban-card
       draggable
       onDragStart={(e) => {
         e.stopPropagation(); // Impede que a coluna seja arrastada junto

@@ -132,6 +132,17 @@ export function HomologacaoKanban() {
     toast.success("Novo projeto criado.");
   }
 
+  async function criarCardNaColuna(nome: string, statusId: string) {
+    if (!integradorAtivo) {
+      toast.error("Selecione um integrador antes de criar o projeto.");
+      return false;
+    }
+
+    criarProjetoManual(integradorAtivo.id, statusId, nome);
+    toast.success("Projeto criado na coluna selecionada.");
+    return true;
+  }
+
   async function handleExcluirProjeto(clienteId: string) {
     if (!confirm("Excluir este projeto e todos os seus anexos? Esta ação não pode ser desfeita.")) return;
     const excluido = await excluirProjeto(clienteId);
@@ -464,6 +475,7 @@ export function HomologacaoKanban() {
             onCardDrop={handleCardDrop}
             onCardClick={setClienteSelecionadoId}
             onPropostaClick={() => undefined}
+            onCreateCard={criarCardNaColuna}
           />
         ))}
 

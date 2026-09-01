@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Move } from 'lucide-react';
+import { Check, Move, Plus, X } from 'lucide-react';
 import { KanbanCard } from './KanbanCard';
 
 interface KanbanColumnProps {
@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   onCardDrop: (clienteId: string, statusId: string | null) => void;
   onCardClick: (clienteId: string) => void;
   onPropostaClick: (cliente: any) => void;
+  onCreateCard?: (nome: string, statusId: string) => Promise<boolean>;
 }
 
 export function KanbanColumn({
@@ -19,13 +20,42 @@ export function KanbanColumn({
   onColumnDrop,
   onCardDrop,
   onCardClick,
-  onPropostaClick
+  onPropostaClick,
+  onCreateCard,
 }: KanbanColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [adicionandoCard, setAdicionandoCard] = useState(false);
+  const [nomeNovoCard, setNomeNovoCard] = useState('');
+  const [salvandoCard, setSalvandoCard] = useState(false);
   const ehColunaProposta = coluna.nome.toLowerCase().includes('proposta');
+
+  async function criarCard(event: React.FormEvent) {
+    event.preventDefault();
+    const nome = nomeNovoCard.trim();
+    if (!nome || !onCreateCard) return;
+
+    setSalvandoCard(true);
+    const criado = await onCreateCard(nome, coluna.id);
+    setSalvandoCard(false);
+
+    if (criado) {
+      setNomeNovoCard('');
+      setAdicionandoCard(false);
+    }
+  }
+
+  function abrirNovoCardAoClicarNaColuna(event: React.MouseEvent<HTMLDivElement>) {
+    if (!onCreateCard || adicionandoCard) return;
+
+    const alvo = event.target as HTMLElement;
+    if (alvo.closest('[data-kanban-card], button, input, form')) return;
+
+    setAdicionandoCard(true);
+  }
 
   return (
     <div 
+      onClick={abrirNovoCardAoClicarNaColuna}
       onDragOver={(e) => {
         e.preventDefault(); // Obrigatório para permitir o drop
         setIsDragOver(true);
@@ -69,7 +99,63 @@ export function KanbanColumn({
         </span>
       </div>
 
-      <div className="space-y-3.5 flex-1 overflow-y-auto overflow-x-hidden pb-2 scrollbar-thin scrollbar-thumb-slate-200">
+      {onCreateCard && (
+        <div className="mb-3 border-b border-slate-200/80 pb-3">
+          {adicionandoCard ? (
+            <form onSubmit={criarCard} className="rounded-xl border border-amber-200 bg-white p-2 shadow-sm">
+              <input
+                autoFocus
+                value={nomeNovoCard}
+                onChange={event => setNomeNovoCard(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    setNomeNovoCard('');
+                    setAdicionandoCard(false);
+                  }
+                }}
+                placeholder="Nome do cliente"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              />
+              <div className="mt-2 flex justify-end gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNomeNovoCard('');
+                    setAdicionandoCard(false);
+                  }}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                  aria-label="Cancelar novo cartão"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <button
+                  type="submit"
+                  disabled={!nomeNovoCard.trim() || salvandoCard}
+                  className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Check className="h-4 w-4" />
+                  {salvandoCard ? 'Criando...' : 'Adicionar'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdicionandoCard(true)}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-white hover:text-amber-700"
+            >
+              <Plus className="h-4 w-4" />
+              Adicionar cartão
+            </button>
+          )}
+        </div>
+      )}
+
+      <div
+        className={`space-y-3.5 flex-1 overflow-y-auto overflow-x-hidden pb-2 scrollbar-thin scrollbar-thumb-slate-200 ${
+          onCreateCard ? 'cursor-text' : ''
+        }`}
+      >
         {clientes.map((cliente) => (
           <KanbanCard
             key={cliente.id}
@@ -87,6 +173,7 @@ export function KanbanColumn({
           </div>
         )}
       </div>
+
     </div>
   );
 }

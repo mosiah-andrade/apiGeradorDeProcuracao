@@ -8,7 +8,7 @@ export interface ClienteData {
   codigo_uc: string;
   cidade: string;
   estado: string;
-  status_id: string;
+  status_id: string | null;
   kanban_status?: { nome: string };
 }
 

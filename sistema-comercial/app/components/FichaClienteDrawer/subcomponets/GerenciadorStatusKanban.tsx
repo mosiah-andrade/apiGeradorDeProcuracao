@@ -3,11 +3,11 @@ import { Trash2, Plus, Share2 } from 'lucide-react';
 import { KanbanStatus } from '../types';
 
 interface Props {
-  statusAtualId: string;
+  statusAtualId: string | null;
   statusNome: string;
   listaStatus: KanbanStatus[];
   modoEdicao: boolean;
-  onChangeStatus: (id: string) => void;
+  onChangeStatus: (id: string | null) => void;
   supabase: any;
   onStatusAtualizado: (novaLista: KanbanStatus[]) => void;
 }
@@ -44,7 +44,7 @@ export function GerenciadorStatusKanban({ statusAtualId, statusNome, listaStatus
     try {
       await supabase.from('kanban_status').delete().eq('id', id);
       onStatusAtualizado(listaStatus.filter(st => st.id !== id));
-      if (statusAtualId === id) onChangeStatus('');
+      if (statusAtualId === id) onChangeStatus(null);
     } catch (error) { alert('Erro ao excluir'); }
   };
   
@@ -60,7 +60,7 @@ export function GerenciadorStatusKanban({ statusAtualId, statusNome, listaStatus
         </div>
       ) : (
         <div className="space-y-3">
-          <select value={statusAtualId} onChange={(e) => onChangeStatus(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
+          <select value={statusAtualId ?? ''} onChange={(e) => onChangeStatus(e.target.value || null)} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
             <option value="">Sem Status Definido</option>
             {listaStatus.map(st => <option key={st.id} value={st.id}>{st.nome}</option>)}
           </select>

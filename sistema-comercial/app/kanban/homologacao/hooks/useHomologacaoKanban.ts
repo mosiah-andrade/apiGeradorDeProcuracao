@@ -480,13 +480,13 @@ export function useHomologacaoKanban() {
     return novoIntegrador;
   }
 
-  function criarProjetoManual(integradorId: string) {
+  function criarProjetoManual(integradorId: string, statusId?: string | null, nome?: string) {
     const id = crypto.randomUUID();
-    const statusInicial = colunas[0]?.id || null;
+    const statusInicial = statusId ?? colunas[0]?.id ?? null;
     const novoCliente: HomologacaoCard = {
       id,
       integradorId,
-      nome: "Novo projeto de homologacao",
+      nome: nome?.trim() || "Novo projeto de homologacao",
       email: "",
       telefone: "",
       status_id: statusInicial,

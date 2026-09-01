@@ -33,6 +33,33 @@ interface ClienteCard {
 }
 
 const colunasProtegidas = ['novo lead', 'em negociação', 'proposta enviada', 'análise técnica', 'proposta comercial'];
+let criacaoDeStatusPadraoEmAndamento: Promise<void> | null = null;
+
+function normalizarNomeStatus(nome: string) {
+  return nome.trim().toLocaleLowerCase('pt-BR');
+}
+
+function removerStatusDuplicados(statuses: StatusColuna[]) {
+  const statusPorNome = new Map<string, StatusColuna>();
+  const idParaStatusPrincipal = new Map<string, string>();
+
+  for (const status of statuses) {
+    const chave = normalizarNomeStatus(status.nome);
+    const statusPrincipal = statusPorNome.get(chave);
+
+    if (statusPrincipal) {
+      idParaStatusPrincipal.set(status.id, statusPrincipal.id);
+    } else {
+      statusPorNome.set(chave, status);
+      idParaStatusPrincipal.set(status.id, status.id);
+    }
+  }
+
+  return {
+    statusUnicos: [...statusPorNome.values()],
+    idParaStatusPrincipal,
+  };
+}
 
 export default function KanbanPage() {
   const supabase = createClient();
@@ -92,29 +119,49 @@ export default function KanbanPage() {
 
       if (statusError) throw statusError;
 
-      // Cria colunas padrão se não existir nenhuma
+      // Evita que duas montagens simultâneas da página criem os status padrão em duplicidade.
       if (!statusData || statusData.length === 0) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const colunasPadrao = [
-            { user_id: session.user.id, nome: 'Novo Lead', cor: '#3b82f6', ordem: 1 },
-            { user_id: session.user.id, nome: 'Em Negociação', cor: '#f59e0b', ordem: 2 },
-            { user_id: session.user.id, nome: 'Proposta Enviada', cor: '#547c14', ordem: 3 },
-            { user_id: session.user.id, nome: 'Análise Técnica', cor: '#a855f7', ordem: 4 }
-          ];
-          const { data: novasColunas } = await supabase.from('kanban_status').insert(colunasPadrao).select();
-          statusData = novasColunas || [];
+        if (!criacaoDeStatusPadraoEmAndamento) {
+          criacaoDeStatusPadraoEmAndamento = (async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) return;
+
+            const colunasPadrao = [
+              { user_id: session.user.id, nome: 'Novo Lead', cor: '#3b82f6', ordem: 1 },
+              { user_id: session.user.id, nome: 'Em Negociação', cor: '#f59e0b', ordem: 2 },
+              { user_id: session.user.id, nome: 'Proposta Enviada', cor: '#547c14', ordem: 3 },
+              { user_id: session.user.id, nome: 'Análise Técnica', cor: '#a855f7', ordem: 4 },
+            ];
+            const { error } = await supabase.from('kanban_status').insert(colunasPadrao);
+            if (error && error.code !== '23505') throw error;
+          })().finally(() => {
+            criacaoDeStatusPadraoEmAndamento = null;
+          });
         }
+
+        await criacaoDeStatusPadraoEmAndamento;
+        const { data: statusAtualizados, error: statusAtualizadosError } = await supabase
+          .from('kanban_status')
+          .select('*')
+          .order('ordem', { ascending: true });
+
+        if (statusAtualizadosError) throw statusAtualizadosError;
+        statusData = statusAtualizados || [];
       }
 
-      setColunas(statusData || []);
+      const { statusUnicos, idParaStatusPrincipal } = removerStatusDuplicados(statusData || []);
+      setColunas(statusUnicos);
 
       const { data: clientesData, error: clientesError } = await supabase
         .from('clientes')
-        .select('id, nome, email, telefone, status_id, cidade, estado');
+        .select('id, nome, email, telefone, status_id, cidade, estado')
+        .order('created_at', { ascending: false });
 
       if (clientesError) throw clientesError;
-      setClientes(clientesData || []);
+      setClientes((clientesData || []).map(cliente => ({
+        ...cliente,
+        status_id: cliente.status_id ? idParaStatusPrincipal.get(cliente.status_id) || cliente.status_id : null,
+      })));
     } catch (error) {
       console.error(error);
     } finally {
@@ -129,6 +176,11 @@ export default function KanbanPage() {
   async function adicionarColuna(e: React.FormEvent) {
     e.preventDefault();
     if (!novoStatusNome.trim()) return;
+
+    if (colunas.some(coluna => normalizarNomeStatus(coluna.nome) === normalizarNomeStatus(novoStatusNome))) {
+      alert('Já existe um status com esse nome.');
+      return;
+    }
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -221,6 +273,30 @@ export default function KanbanPage() {
     }
   };
 
+  async function criarCardNaColuna(nome: string, statusId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        alert('Faça login novamente para criar um cartão.');
+        return false;
+      }
+
+      const { data, error } = await supabase
+        .from('clientes')
+        .insert({ user_id: session.user.id, nome, status_id: statusId })
+        .select('id, nome, email, telefone, status_id, cidade, estado')
+        .single();
+
+      if (error) throw error;
+      setClientes(clientesAtuais => [data, ...clientesAtuais]);
+      return true;
+    } catch (error) {
+      console.error('Erro ao criar cartão:', error);
+      alert('Não foi possível criar o cartão. Tente novamente.');
+      return false;
+    }
+  }
+
  const clientesSemStatus = clientes.filter(c => !c.status_id || !colunas.some(col => col.id === c.status_id));
 
   // === RENDERIZAÇÃO ===
@@ -306,6 +382,7 @@ export default function KanbanPage() {
             onCardDrop={handleCardDrop} // Certifique-se de que a função existe
             onCardClick={setClienteSelecionadoFichaId}
             onPropostaClick={setClienteParaProposta}
+            onCreateCard={criarCardNaColuna}
           />
         ))}
 

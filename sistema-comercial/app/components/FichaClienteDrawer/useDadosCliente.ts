@@ -2,6 +2,18 @@ import { useState, useEffect, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ClienteData, KanbanStatus, Proposta } from './types';
 
+function removerStatusDuplicados(statuses: KanbanStatus[]) {
+  const idsPorNome = new Set<string>();
+
+  return statuses.filter(status => {
+    const nomeNormalizado = status.nome.trim().toLocaleLowerCase('pt-BR');
+    if (idsPorNome.has(nomeNormalizado)) return false;
+
+    idsPorNome.add(nomeNormalizado);
+    return true;
+  });
+}
+
 export function useDadosCliente(clienteId: string | null, onAtualizado?: () => void, onClose?: () => void) {
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
@@ -18,7 +30,7 @@ export function useDadosCliente(clienteId: string | null, onAtualizado?: () => v
       setLoading(true);
       try {
         const { data: statusData } = await supabase.from('kanban_status').select('*').order('ordem');
-        if (statusData) setListaStatus(statusData);
+        if (statusData) setListaStatus(removerStatusDuplicados(statusData));
 
         const { data: clientData } = await supabase
           .from('clientes')
@@ -46,8 +58,8 @@ export function useDadosCliente(clienteId: string | null, onAtualizado?: () => v
     carregarFicha();
   }, [clienteId]);
 
-  const handleChangeCliente = (campo: keyof ClienteData, valor: string) => {
-    if (cliente) setCliente({ ...cliente, [campo]: valor });
+  const handleChangeCliente = (campo: keyof ClienteData, valor: string | null) => {
+    if (cliente) setCliente({ ...cliente, [campo]: valor } as ClienteData);
   };
 
   const salvarCliente = async () => {
