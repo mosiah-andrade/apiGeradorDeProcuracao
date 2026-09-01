@@ -21,7 +21,7 @@ export function KanbanOrphanColumn({ clientes, onCardDrop, onCardClick }: Kanban
           console.error("Erro ao processar drop em órfãos", error);
         }
       }}
-      className="bg-red-50/50 border border-dashed border-red-200 rounded-2xl p-4 w-80 shrink-0 min-h-[550px]"
+      className="w-[calc(100vw-2rem)] shrink-0 min-h-[calc(100dvh-245px)] rounded-2xl border border-dashed border-red-200 bg-red-50/50 p-3 sm:w-80 sm:min-h-[550px] sm:p-4"
     >
       <div className="flex justify-between items-center mb-4 p-2 bg-red-100/60 rounded-xl">
         <div className="flex items-center gap-2 truncate">

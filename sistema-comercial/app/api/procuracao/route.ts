@@ -140,23 +140,73 @@ function paragraph(doc: jsPDF, text: string, y: number) {
   return y + needed;
 }
 
-function signatureBlock(doc: jsPDF, name: string, document: string, y: number) {
-  y = ensureSpace(doc, y, 48);
+function powerList(doc: jsPDF, powers: string[], y: number) {
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(30, 41, 59);
+
+  for (const [index, power] of powers.entries()) {
+    const lines = split(doc, `${index + 1}. ${power}`, page.contentWidth - 4);
+    const needed = lines.length * 5 + 3;
+
+    // Mantém cada poder inteiro na mesma página para evitar redução visual
+    // ou quebra no meio da lista.
+    if (y + needed > page.bottomY) {
+      y = addPage(doc);
+      // drawHeader altera a fonte para o subtítulo; restaura o padrão da lista.
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(30, 41, 59);
+    }
+    doc.text(lines, page.marginX + 4, y, { lineHeightFactor: 1.25 });
+    y += needed;
+  }
+
+  return y + 4;
+}
+
+function signatureBlock(doc: jsPDF, outorgante: Field, contratado: Field, y: number, isPessoaJuridica: boolean) {
+  y = ensureSpace(doc, y, 53);
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(page.marginX, y, page.contentWidth, 42, 1.5, 1.5, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(15, 118, 110);
+  doc.text("ASSINATURAS", page.marginX + 4, y + 7);
 
   doc.setDrawColor(100, 116, 139);
-  doc.line(55, y + 22, 155, y + 22);
+  const centroEsquerdo = page.marginX + page.contentWidth * 0.25;
+  const centroDireito = page.marginX + page.contentWidth * 0.75;
+  doc.line(page.marginX + 8, y + 25, page.marginX + page.contentWidth / 2 - 6, y + 25);
+  doc.line(page.marginX + page.contentWidth / 2 + 6, y + 25, page.marginX + page.contentWidth - 8, y + 25);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(15, 23, 42);
-  doc.text(name || "CONTRATANTE", 105, y + 30, { align: "center" });
+  doc.text(outorgante.value || "OUTORGANTE", centroEsquerdo, y + 32, { align: "center", maxWidth: 78 });
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(71, 85, 105);
-  doc.text(document || "", 105, y + 36, { align: "center" });
+  doc.text(`${isPessoaJuridica ? "CPF do representante" : "CPF"}: ${outorgante.label || ""}`, centroEsquerdo, y + 38, { align: "center", maxWidth: 78 });
+  if (isPessoaJuridica) {
+    doc.setFontSize(7);
+    doc.text("Representante legal da pessoa jurídica outorgante", centroEsquerdo, y + 42, { align: "center", maxWidth: 78 });
+  }
 
-  return y + 44;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  doc.text(contratado.value || "OUTORGADO(A) / CONTRATADO(A)", centroDireito, y + 32, { align: "center", maxWidth: 78 });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`CPF/CNPJ: ${contratado.label || ""}`, centroDireito, y + 38, { align: "center", maxWidth: 78 });
+
+  return y + 50;
 }
 
 function drawFooters(doc: jsPDF) {
@@ -185,13 +235,15 @@ function gerarPdfProcuracao(dados: Payload) {
   const cpfRepresentante = campo(dados, "cpf_representante", "CPF_DO_REPRESENTANTE");
   const nomeAssinatura = isPessoaJuridica ? representante : nomeTitular;
   const docAssinatura = isPessoaJuridica ? cpfRepresentante : documentoTitular;
+  const nomeContratado = campo(dados, "nome_CONTRATADO", "NOME_CONTRATADO");
+  const documentoContratado = campo(dados, "cpf_CONTRATADO", "CPF_CONTRATADO");
 
   drawHeader(doc);
   let y = page.topY;
 
   y = paragraph(
     doc,
-    "Pelo presente instrumento particular de procuracao, o(a) CONTRATANTE abaixo identificado(a) nomeia, outorga e constitui seu procurador para representa-lo(a) perante a concessionaria de energia eletrica.",
+    "Pelo presente instrumento particular, o(a) OUTORGANTE abaixo qualificado(a) nomeia e constitui o(a) OUTORGADO(A) como seu(sua) bastante procurador(a), conferindo-lhe poderes especiais, específicos e expressos para representar o(a) OUTORGANTE perante a concessionária de energia elétrica e os demais agentes envolvidos no processo de acesso, conexão e homologação da unidade consumidora identificada neste instrumento.",
     y
   ) + 4;
 
@@ -257,9 +309,26 @@ function gerarPdfProcuracao(dados: Payload) {
   );
 
   y = sectionTitle(doc, "Poderes outorgados", y);
+  y = paragraph(doc, "Para a finalidade exclusiva descrita neste instrumento, o(a) OUTORGANTE autoriza o(a) OUTORGADO(A) a praticar, em seu nome, os seguintes atos:", y) + 2;
+  y = powerList(doc, [
+    "Protocolar, acompanhar, aditar, retificar e retirar requerimentos, formulários, declarações, termos de adesão, autorizações e documentos necessários ao pedido de acesso, conexão, vistoria, homologação e demais etapas da micro ou minigeração distribuída.",
+    "Apresentar, complementar, substituir e receber documentos técnicos, cadastrais e operacionais relacionados à unidade consumidora, incluindo faturas, dados de instalação, projetos, diagramas unifilares, memorial descritivo, ART/RRT e documentação de equipamentos.",
+    "Prestar esclarecimentos, responder exigências, acompanhar protocolos, solicitar informações, cópias, parecer de acesso, relatórios, histórico e andamento do processo perante a concessionária e seus canais de atendimento.",
+    "Assinar requerimentos, formulários e declarações estritamente necessários à conexão da unidade geradora, à atualização cadastral vinculada ao projeto, ao sistema de compensação de energia elétrica e à alocação de créditos das unidades beneficiárias indicadas pelo(a) OUTORGANTE.",
+    "Receber comunicações, notificações, pendências e documentos emitidos pela concessionária; agendar ou acompanhar vistoria técnica, inspeção, troca de medidor e demais providências administrativas relacionadas ao processo.",
+    "Praticar todos os atos administrativos acessórios, complementares e indispensáveis à conclusão da homologação, sempre dentro dos limites desta outorga e da regulamentação aplicável.",
+  ], y);
+
+  y = sectionTitle(doc, "Limites da outorga", y);
   y = paragraph(
     doc,
-    "Ao procurador acima qualificado sao conferidos poderes suficientes e necessarios para gestao energetica e representacao em servicos relacionados a troca de titularidade, transferencia de credito, acordo operacional, tratativas sobre processo de micro e mini geracao, analise de faturas e solicitacao de parecer de acesso.",
+    "Esta procuração não autoriza o(a) OUTORGADO(A) a vender, alienar, onerar ou transferir bens e direitos do(a) OUTORGANTE; movimentar contas bancárias; receber valores, dar quitação financeira; assumir empréstimos, garantias ou obrigações financeiras; celebrar contratos que não sejam estritamente necessários à homologação; nem praticar atos estranhos ao objeto e à unidade consumidora descritos neste instrumento.",
+    y
+  ) + 6;
+
+  y = paragraph(
+    doc,
+    "A presente outorga vigorará até a conclusão do processo de homologação ou até sua revogação expressa, por escrito, pelo(a) OUTORGANTE. A revogação não prejudicará os atos regularmente praticados antes de sua comunicação ao(à) OUTORGADO(A) e à concessionária, quando aplicável.",
     y
   ) + 9;
 
@@ -270,7 +339,13 @@ function gerarPdfProcuracao(dados: Payload) {
   doc.text(`${cidade}, ${campo(dados, "DIA")} de ${campo(dados, "MES")} de ${campo(dados, "ANO")}.`, page.marginX, y);
   y += 8;
 
-  signatureBlock(doc, nomeAssinatura || nomeTitular, docAssinatura, y);
+  signatureBlock(
+    doc,
+    { label: docAssinatura, value: nomeAssinatura || nomeTitular },
+    { label: documentoContratado, value: nomeContratado },
+    y,
+    isPessoaJuridica
+  );
   drawFooters(doc);
 
   return doc.output("arraybuffer");

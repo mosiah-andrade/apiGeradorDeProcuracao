@@ -252,7 +252,12 @@ export function HomologacaoDrawer({
               <TextInput label="CNPJ da concessionaria" value={cliente.cnpjConcessionaria} onChange={value => onClienteChange({ ...cliente, cnpjConcessionaria: value })} />
               <TextInput label="Unidade consumidora" value={cliente.unidadeConsumidora} onChange={value => onClienteChange({ ...cliente, unidadeConsumidora: value })} />
               <TextInput label="Protocolo" value={cliente.protocolo || ""} onChange={value => onClienteChange({ ...cliente, protocolo: value || null })} />
-              <TextInput label="Prazo" value={cliente.prazo} onChange={value => onClienteChange({ ...cliente, prazo: value })} />
+              <TextInput label="Descrição do prazo" value={cliente.prazo} onChange={value => onClienteChange({ ...cliente, prazo: value })} />
+              <PrazoDataInput
+                key={cliente.id}
+                value={cliente.prazoEm || ""}
+                onSave={prazoEm => onClienteChange({ ...cliente, prazoEm: prazoEm || null })}
+              />
               <TextInput label="Responsavel" value={cliente.responsavel} onChange={value => onClienteChange({ ...cliente, responsavel: value })} />
               <label className="rounded-lg bg-slate-50 px-3 py-2">
                 <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">Tipo de ligacao</span>
@@ -787,6 +792,43 @@ function TextInput({
         onChange={event => onChange(event.target.value)}
         className="mt-1 w-full bg-transparent text-sm font-bold text-slate-800 outline-none"
       />
+    </label>
+  );
+}
+
+function PrazoDataInput({ value, onSave }: { value: string; onSave: (value: string) => void }) {
+  const [rascunho, setRascunho] = useState(value);
+
+  function salvar() {
+    if (rascunho === value) return;
+    onSave(rascunho);
+  }
+
+  return (
+    <label className="rounded-lg bg-slate-50 px-3 py-2">
+      <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">Data limite</span>
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          type="date"
+          value={rascunho}
+          onChange={event => setRascunho(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              salvar();
+            }
+          }}
+          className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-800 outline-none"
+        />
+        <button
+          type="button"
+          onClick={salvar}
+          disabled={rascunho === value}
+          className="rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Salvar
+        </button>
+      </div>
     </label>
   );
 }

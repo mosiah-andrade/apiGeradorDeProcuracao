@@ -1,7 +1,7 @@
 export function KanbanSkeleton() {
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
+    <div className="min-h-screen bg-slate-50 px-3 py-4 sm:p-6">
+      <div className="mb-8 flex w-full items-center justify-between">
         <div className="space-y-2">
           <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
           <div className="h-4 w-72 bg-slate-200 rounded-lg animate-pulse"></div>
@@ -12,7 +12,7 @@ export function KanbanSkeleton() {
         </div>
       </div>
       
-      <div className="flex gap-4 overflow-x-hidden max-w-7xl mx-auto items-start">
+      <div className="flex w-full items-start gap-4 overflow-x-hidden">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="bg-slate-100/50 border border-slate-200/50 rounded-2xl p-4 w-80 shrink-0 min-h-[550px]">
             <div className="h-10 w-full bg-slate-200/70 rounded-xl mb-5 animate-pulse"></div>

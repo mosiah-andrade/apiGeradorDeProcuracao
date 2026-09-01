@@ -38,6 +38,7 @@ export interface HomologacaoCard {
   tipoLigacao: "Monofasico" | "Bifasico" | "Trifasico";
   protocolo: string | null;
   prazo: string;
+  prazoEm?: string | null;
   responsavel: string;
   procuracaoGerada: boolean;
   equipamentos: HomologacaoEquipamento[];

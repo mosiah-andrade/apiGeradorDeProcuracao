@@ -73,6 +73,7 @@ export default function KanbanPage() {
   const [clienteSelecionadoFichaId, setClienteSelecionadoFichaId] = useState<string | null>(null);
   const [clienteParaProposta, setClienteParaProposta] = useState<any | null>(null);
   const [isNovoClienteModalOpen, setIsNovoClienteModalOpen] = useState(false);
+  const [projetoParaAbrirId, setProjetoParaAbrirId] = useState<string | null>(null);
 
   // Ref para o container horizontal do kanban (usado para auto-scroll durante drag)
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -171,6 +172,14 @@ export default function KanbanPage() {
 
   useEffect(() => {
     carregarDadosKanban();
+  }, []);
+
+  useEffect(() => {
+    const projetoId = new URLSearchParams(window.location.search).get('projeto');
+    if (!projetoId) return;
+
+    setAbaAtiva('homologacao');
+    setProjetoParaAbrirId(projetoId);
   }, []);
 
   async function adicionarColuna(e: React.FormEvent) {
@@ -303,8 +312,8 @@ export default function KanbanPage() {
   if (loading) return <KanbanSkeleton />;
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto mb-6">
+    <div className="min-h-screen bg-slate-50 px-3 py-4 sm:p-6">
+      <div className="mb-6 w-full">
         <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
           <button
             type="button"
@@ -334,25 +343,25 @@ export default function KanbanPage() {
       </div>
 
       {abaAtiva === 'homologacao' ? (
-        <HomologacaoKanban />
+        <HomologacaoKanban projetoParaAbrirId={projetoParaAbrirId} />
       ) : (
         <>
       {/* HEADER DA PÁGINA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 max-w-7xl mx-auto">
+      <div className="mb-6 flex w-full flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Funil Kanban Solar</h1>
           <p className="text-sm text-slate-500">Arraste as colunas pelos cabeçalhos para reordenar ou mova os clientes entre elas.</p>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex w-full gap-2 sm:w-auto">
           <button 
             onClick={() => setMostrarConfig(!mostrarConfig)} 
-            className="flex items-center gap-2 border border-slate-200 bg-white px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all shadow-sm"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:bg-slate-100 sm:flex-none sm:px-4"
           >
             <Settings className="w-4 h-4" /> Customizar Status
           </button>
           <button
             onClick={() => setIsNovoClienteModalOpen(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm transition-all"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-amber-600 hover:to-orange-700 sm:flex-none sm:px-4"
           >
             <Plus className="w-4 h-4" /> Novo Cliente
           </button>
@@ -371,7 +380,7 @@ export default function KanbanPage() {
       )}
 
       {/* ÁREA DO KANBAN */}
-      <div ref={boardRef} onDragOver={handleBoardDragOver} className="flex gap-4 overflow-x-auto pb-4 max-w-7xl mx-auto items-start">
+      <div ref={boardRef} onDragOver={handleBoardDragOver} className="flex w-full snap-x snap-mandatory items-start gap-3 overflow-x-auto pb-4 sm:gap-4">
         {colunas.map((coluna, index) => (
           <KanbanColumn
             key={coluna.id}

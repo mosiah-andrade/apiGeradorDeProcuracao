@@ -9,6 +9,8 @@ import { FormularioDadosCliente } from './subcomponets/FormularioDadosCliente';
 import { HistoricoPropostas } from './subcomponets/HistoricoPropostas';
 import { BotaoExcluirCliente } from './subcomponets/BotaoExcluirCliente';
 import { RepositorioCliente } from '../RepositorioCliente';
+import { ModalGerarPropostaSolar } from '../ModalGerarPropostaSolar';
+import { PainelComercialCliente } from './subcomponets/PainelComercialCliente';
 
 interface Props {
   clienteId: string | null;
@@ -17,8 +19,9 @@ interface Props {
 }
 
 export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: Props) {
-  const [abaAtiva, setAbaAtiva] = useState<'detalhes' | 'documentos'>('detalhes');
+  const [abaAtiva, setAbaAtiva] = useState<'detalhes' | 'comercial' | 'documentos'>('detalhes');
   const [modoEdicao, setModoEdicao] = useState(false);
+  const [mostrarProposta, setMostrarProposta] = useState(false);
 
   const { 
     cliente, handleChangeCliente, salvarCliente, excluirCliente,
@@ -33,7 +36,7 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
   if (!clienteId) return null;
 
   return (
-    <DrawerWrapper>
+    <DrawerWrapper >
       <CabecalhoFichaCliente 
         
         abaAtiva={abaAtiva} setAbaAtiva={setAbaAtiva}
@@ -46,9 +49,9 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-6 bg-white flex flex-col justify-between">
+        <div className="flex min-w-0 flex-1 flex-col justify-between overflow-y-auto overflow-x-hidden bg-white p-4 sm:p-6">
           {abaAtiva === 'detalhes' ? (
-            <div className="space-y-6">
+            <div className="min-w-0 space-y-6">
               <GerenciadorStatusKanban 
                 statusAtualId={cliente.status_id}
                 statusNome={cliente.kanban_status?.nome || ''}
@@ -58,7 +61,6 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
                 onChangeStatus={(id) => handleChangeCliente('status_id', id)}
                 onStatusAtualizado={setListaStatus}
               />
-              Link aqui
               <FormularioDadosCliente 
                 dados={cliente} 
                 modoEdicao={modoEdicao} 
@@ -75,6 +77,14 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
                 <BotaoExcluirCliente onExcluir={excluirCliente} isPending={isPending} />
               )}
             </div>
+          ) : abaAtiva === 'comercial' ? (
+            <PainelComercialCliente
+              cliente={cliente}
+              propostas={propostas}
+              modoEdicao={modoEdicao}
+              onChange={handleChangeCliente}
+              onCriarProposta={() => setMostrarProposta(true)}
+            />
           ) : (
             <div className="h-full">
               <div className="mb-4">
@@ -86,6 +96,14 @@ export function FichaClienteDrawer({ clienteId, onClose, onClienteAtualizado }: 
           )}
         </div>
       )}
+      <ModalGerarPropostaSolar
+        cliente={mostrarProposta ? cliente : null}
+        onClose={() => setMostrarProposta(false)}
+        onSuccess={() => {
+          setMostrarProposta(false);
+          if (onClienteAtualizado) onClienteAtualizado();
+        }}
+      />
     </DrawerWrapper>
   );
 }

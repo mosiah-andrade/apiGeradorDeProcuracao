@@ -9,6 +9,13 @@ export interface ClienteData {
   cidade: string;
   estado: string;
   status_id: string | null;
+  consumo_medio_kwh?: number | null;
+  demanda_estimada_kw?: number | null;
+  potencia_sugerida_kwp?: number | null;
+  origem?: string | null;
+  temperatura_lead?: 'frio' | 'morno' | 'quente' | null;
+  proximo_contato_em?: string | null;
+  observacoes_comerciais?: string | null;
   kanban_status?: { nome: string };
 }
 

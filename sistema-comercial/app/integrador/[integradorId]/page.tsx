@@ -83,6 +83,7 @@ interface HomologacaoProjetoRow {
   tipo_ligacao: HomologacaoCard["tipoLigacao"] | null;
   protocolo: string | null;
   prazo: string | null;
+  prazo_em?: string | null;
   responsavel: string | null;
   procuracao_gerada: boolean | null;
   equipamentos: unknown;
@@ -131,6 +132,7 @@ function projetoDoBanco(row: HomologacaoProjetoRow): HomologacaoCard {
     tipoLigacao: row.tipo_ligacao || "Bifasico",
     protocolo: row.protocolo,
     prazo: row.prazo || "Recebido pelo portal",
+    prazoEm: row.prazo_em || null,
     responsavel: row.responsavel || "Homologador",
     procuracaoGerada: Boolean(row.procuracao_gerada),
     equipamentos: asArray<HomologacaoEquipamento>(row.equipamentos),
@@ -250,7 +252,7 @@ export default function PortalIntegradorPage({
       const resposta = await fetch(`/api/portal-integrador/${integradorId}`, { method: "POST", body: dados });
       const retorno = await resposta.json();
       if (!resposta.ok) throw new Error(retorno.erro);
-      setProjetos([{ id: retorno.projeto.id, integradorId, nome: retorno.projeto.nome, email: null, telefone: null, status_id: retorno.projeto.status_id, cidade: null, estado: null, cpfCnpj: "", rg: "", orgaoEmissor: "", endereco: "", bairro: "", cep: "", concessionaria: formulario.concessionaria, cidadeConcessionaria: "", cnpjConcessionaria: "", unidadeConsumidora: formulario.unidadeConsumidora, titular: formulario.titular, representante: "", cpfRepresentante: "", contratadoNome: "", contratadoCpf: "", contratadoRg: "", contratadoOrgaoEmissor: "", contratadoEndereco: "", consumoMedioKwh: 0, potenciaKWp: Number(formulario.potenciaKWp) || 0, demandaCalculadaKw: 0, tipoLigacao: "Bifasico", protocolo: null, prazo: retorno.projeto.prazo, responsavel: "", procuracaoGerada: false, equipamentos: [], datasheets: [], checklist: [], camposAdicionais: [], beneficiarias: [], metodoRateio: "porcentagem", documentosUploads: [] }]);
+      setProjetos([{ id: retorno.projeto.id, integradorId, nome: retorno.projeto.nome, email: null, telefone: null, status_id: retorno.projeto.status_id, cidade: null, estado: null, cpfCnpj: "", rg: "", orgaoEmissor: "", endereco: "", bairro: "", cep: "", concessionaria: formulario.concessionaria, cidadeConcessionaria: "", cnpjConcessionaria: "", unidadeConsumidora: formulario.unidadeConsumidora, titular: formulario.titular, representante: "", cpfRepresentante: "", contratadoNome: "", contratadoCpf: "", contratadoRg: "", contratadoOrgaoEmissor: "", contratadoEndereco: "", consumoMedioKwh: 0, potenciaKWp: Number(formulario.potenciaKWp) || 0, demandaCalculadaKw: 0, tipoLigacao: "Bifasico", protocolo: null, prazo: retorno.projeto.prazo, prazoEm: null, responsavel: "", procuracaoGerada: false, equipamentos: [], datasheets: [], checklist: [], camposAdicionais: [], beneficiarias: [], metodoRateio: "porcentagem", documentosUploads: [] }]);
       setFormulario(formularioInicial);
       setArquivos({});
       setArquivosExtras([]);
@@ -396,10 +398,11 @@ export default function PortalIntegradorPage({
                       {status?.nome || "Sem status"}
                     </span>
                   </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  <div className="mt-3 grid gap-2 sm:grid-cols-4">
                     <SmallInfo label="UC" value={projeto.unidadeConsumidora || "Pendente"} />
                     <SmallInfo label="Concessionaria" value={projeto.concessionaria || "Pendente"} />
                     <SmallInfo label="Prazo" value={projeto.prazo} />
+                    <SmallInfo label="Data limite" value={formatarData(projeto.prazoEm)} />
                   </div>
                   {projeto.status_id === "aprovado" && (
                     <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
@@ -460,4 +463,9 @@ function SmallInfo({ label, value }: { label: string; value: string }) {
       <span className="block truncate text-sm font-semibold text-slate-700">{value}</span>
     </div>
   );
+}
+
+function formatarData(data: string | null | undefined) {
+  if (!data) return "Não definida";
+  return new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR");
 }

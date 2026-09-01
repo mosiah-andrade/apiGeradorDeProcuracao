@@ -5,6 +5,14 @@ import { checklistPadraoHomologacao } from "@/app/kanban/homologacao/mockData";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function erroDeColunaPrazoAusente(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+
+  const dadosDoErro = error as { code?: string; message?: string; details?: string };
+  const descricao = `${dadosDoErro.message || ""} ${dadosDoErro.details || ""}`.toLowerCase();
+  return descricao.includes("prazo_em") && ["42703", "PGRST204"].includes(dadosDoErro.code || "");
+}
+
 async function validarPortal(integradorId: string, token: string | null) {
   const baseQuery = supabaseAdmin
     .from("homologacao_integradores")
@@ -27,11 +35,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ inte
   const portal = await validarPortal(integradorId, new URL(request.url).searchParams.get("token"));
   if (!portal) return NextResponse.json({ erro: "Link de acesso inválido." }, { status: 404 });
 
-  const [documentos, status, projetos] = await Promise.all([
+  const [documentos, status, projetosComPrazo] = await Promise.all([
     supabaseAdmin.from("homologacao_documentos_config").select("id, nome, tipo, obrigatorio, ativo").eq("user_id", portal.user_id).eq("ativo", true).order("created_at"),
     supabaseAdmin.from("homologacao_status").select("id, nome, cor, ordem").eq("user_id", portal.user_id).order("ordem"),
-    supabaseAdmin.from("homologacao_projetos").select("id, integrador_id, status_id, nome, titular, unidade_consumidora, concessionaria, prazo, potencia_kwp, created_at").eq("integrador_id", integradorId).order("created_at", { ascending: false }),
+    supabaseAdmin.from("homologacao_projetos").select("id, integrador_id, status_id, nome, titular, unidade_consumidora, concessionaria, prazo, prazo_em, potencia_kwp, created_at").eq("integrador_id", integradorId).order("created_at", { ascending: false }),
   ]);
+  const projetos = erroDeColunaPrazoAusente(projetosComPrazo.error)
+    ? await supabaseAdmin.from("homologacao_projetos").select("id, integrador_id, status_id, nome, titular, unidade_consumidora, concessionaria, prazo, potencia_kwp, created_at").eq("integrador_id", integradorId).order("created_at", { ascending: false })
+    : projetosComPrazo;
+
   if (documentos.error || status.error || projetos.error) return NextResponse.json({ erro: "Não foi possível carregar o formulário." }, { status: 500 });
 
   return NextResponse.json({ integrador: { nome: portal.nome, contato: portal.contato || "" }, documentos: documentos.data, status: status.data, projetos: projetos.data });
@@ -62,6 +74,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ int
     prazo: "Recebido pelo portal", responsavel: "Homologador", checklist: checklistPadraoHomologacao, campos_adicionais: campos, beneficiarias, metodo_rateio: text("metodoRateio") || "porcentagem",
   }).select("id, nome, status_id, prazo").single();
   if (error || !projeto) return NextResponse.json({ erro: "Não foi possível registrar o projeto." }, { status: 500 });
+
+  const { error: notificacaoError } = await supabaseAdmin.from("homologacao_notificacoes").insert({
+    user_id: portal.user_id,
+    projeto_id: projeto.id,
+    tipo: "projeto_recebido",
+    chave: `projeto-recebido:${projeto.id}`,
+    titulo: "Novo projeto recebido",
+    descricao: `${projeto.nome} foi enviado pelo portal do integrador ${portal.nome}.`,
+  });
+  if (notificacaoError) console.error("Não foi possível registrar a notificação:", notificacaoError);
 
   const uploads = form.getAll("arquivo").filter((item): item is File => item instanceof File && item.size > 0);
   for (const arquivo of uploads) {

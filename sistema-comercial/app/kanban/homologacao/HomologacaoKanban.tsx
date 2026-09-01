@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Check, ClipboardCheck, Copy, ExternalLink, FileText, Image as ImageIcon, Mail, Plus, Search, Settings, Store, Trash2, X } from "lucide-react";
 
@@ -17,7 +17,7 @@ const colunasProtegidasHomologacao = [
   "aprovado",
 ];
 
-export function HomologacaoKanban() {
+export function HomologacaoKanban({ projetoParaAbrirId }: { projetoParaAbrirId?: string | null }) {
   const {
     colunas,
     clientes,
@@ -92,9 +92,19 @@ export function HomologacaoKanban() {
   );
   const clienteSelecionado = clientes.find(cliente => cliente.id === clienteSelecionadoId) || null;
 
+  useEffect(() => {
+    if (!projetoParaAbrirId) return;
+
+    const projeto = clientes.find(cliente => cliente.id === projetoParaAbrirId);
+    if (!projeto) return;
+
+    setIntegradorAtivoId(projeto.integradorId);
+    setClienteSelecionadoId(projeto.id);
+  }, [clientes, projetoParaAbrirId]);
+
   if (carregandoHomologacao) {
     return (
-      <section className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <section className="w-full rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
         <span className="text-sm font-semibold text-slate-500">Carregando homologacao...</span>
       </section>
     );
@@ -171,7 +181,7 @@ export function HomologacaoKanban() {
 
   return (
     <section>
-      <div className="flex flex-col gap-4 mb-6 max-w-7xl mx-auto">
+      <div className="mb-6 flex w-full flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-emerald-700 mb-1">
@@ -464,7 +474,7 @@ export function HomologacaoKanban() {
         />
       )}
 
-      <div className="flex gap-4 overflow-x-auto pb-4 max-w-7xl mx-auto items-start">
+      <div className="flex w-full items-start gap-4 overflow-x-auto pb-4">
         {colunas.map((coluna, index) => (
           <KanbanColumn
             key={coluna.id}

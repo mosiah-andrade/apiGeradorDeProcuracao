@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu' // Importe o novo componente
 import { ChevronDown } from "lucide-react";
+import { NotificationBell } from './NotificationBell';
 
 export default async function Navbar() {
   const supabase = await createClient()
@@ -88,6 +89,7 @@ export default async function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <Link href="/perfil" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
           <div className="text-right hidden sm:block">
             <p className="text-xs font-bold text-slate-900 leading-none">Olá, {nome.split(' ')[0]}</p>

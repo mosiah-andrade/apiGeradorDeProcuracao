@@ -18,7 +18,7 @@ export function KanbanConfigPanel({
   excluirColunaCustomizada
 }: KanbanConfigPanelProps) {
   return (
-    <div className="bg-white border border-slate-200 p-5 rounded-2xl max-w-7xl mx-auto mb-6 shadow-sm animate-fade-in space-y-4">
+    <div className="mb-6 w-full animate-fade-in space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div>
         <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Criar Novo Status Personalizado</h3>
         <form onSubmit={adicionarColuna} className="flex gap-3 max-w-md">

@@ -78,7 +78,7 @@ export function KanbanColumn({
           console.error("Erro ao decodificar o drop:", error);
         }
       }}
-      className={`rounded-2xl p-4 w-80 shrink-0 min-h-[550px] transition-colors duration-200 border flex flex-col
+      className={`flex w-[calc(100vw-2rem)] shrink-0 flex-col rounded-2xl border p-3 min-h-[calc(100dvh-245px)] transition-colors duration-200 sm:w-80 sm:min-h-[550px] sm:p-4
         ${isDragOver ? 'bg-amber-50/50 border-amber-300 shadow-inner' : 'bg-slate-50/80 border-slate-200/80'}`}
     >
       <div 

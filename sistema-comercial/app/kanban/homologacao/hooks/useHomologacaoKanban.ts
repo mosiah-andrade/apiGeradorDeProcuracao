@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import {
   checklistPadraoHomologacao,
   type HomologacaoBeneficiaria,
@@ -71,6 +72,7 @@ interface HomologacaoProjetoRow {
   tipo_ligacao: HomologacaoCard["tipoLigacao"] | null;
   protocolo: string | null;
   prazo: string | null;
+  prazo_em: string | null;
   responsavel: string | null;
   procuracao_gerada: boolean | null;
   equipamentos: unknown;
@@ -147,6 +149,7 @@ function projetoDoBanco(row: HomologacaoProjetoRow, documentosUploads: Homologac
     tipoLigacao: row.tipo_ligacao || "Bifasico",
     protocolo: row.protocolo,
     prazo: row.prazo || "Novo projeto",
+    prazoEm: row.prazo_em,
     responsavel: row.responsavel || "",
     procuracaoGerada: Boolean(row.procuracao_gerada),
     equipamentos: asArray<HomologacaoEquipamento>(row.equipamentos),
@@ -192,6 +195,7 @@ function projetoParaBanco(cliente: HomologacaoCard) {
     tipo_ligacao: cliente.tipoLigacao,
     protocolo: cliente.protocolo,
     prazo: cliente.prazo,
+    prazo_em: cliente.prazoEm,
     responsavel: cliente.responsavel,
     procuracao_gerada: cliente.procuracaoGerada,
     equipamentos: cliente.equipamentos,
@@ -202,6 +206,19 @@ function projetoParaBanco(cliente: HomologacaoCard) {
     metodo_rateio: cliente.metodoRateio,
     updated_at: new Date().toISOString(),
   };
+}
+
+function erroDeColunaPrazoAusente(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+
+  const dadosDoErro = error as { code?: string; message?: string; details?: string };
+  const descricao = `${dadosDoErro.message || ""} ${dadosDoErro.details || ""}`.toLowerCase();
+  return descricao.includes("prazo_em") && ["42703", "PGRST204"].includes(dadosDoErro.code || "");
+}
+
+function projetoParaBancoSemPrazoEm(cliente: HomologacaoCard) {
+  const { prazo_em, ...projeto } = projetoParaBanco(cliente);
+  return projeto;
 }
 
 export function useHomologacaoKanban() {
@@ -345,6 +362,90 @@ export function useHomologacaoKanban() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const canal = supabase
+      .channel("notificacoes-projetos-homologacao")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "homologacao_projetos" },
+        payload => {
+          const projeto = payload.new as Pick<HomologacaoProjetoRow, "nome" | "titular">;
+          toast.success("Novo projeto recebido", {
+            description: projeto.nome || projeto.titular || "Um novo projeto foi enviado para homologação.",
+          });
+          void carregarHomologacao();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(canal);
+    };
+    // A inscrição deve ser criada uma única vez para não duplicar alertas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
+
+  useEffect(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const limite = new Date(hoje);
+    limite.setDate(limite.getDate() + 3);
+    const dataDoAviso = hoje.toISOString().slice(0, 10);
+
+    const projetosComPrazoProximo = clientes.filter(cliente => {
+      if (!cliente.prazoEm) return false;
+
+      const prazo = new Date(`${cliente.prazoEm}T00:00:00`);
+      return !Number.isNaN(prazo.getTime()) && prazo <= limite;
+    });
+
+    function descricaoDoPrazo(cliente: HomologacaoCard) {
+      const prazo = new Date(`${cliente.prazoEm}T00:00:00`);
+      const dataFormatada = prazo.toLocaleDateString("pt-BR");
+      return prazo < hoje
+        ? `${cliente.nome} está atrasado desde ${dataFormatada}.`
+        : `${cliente.nome} vence em ${dataFormatada}.`;
+    }
+
+    const avisosPendentes = projetosComPrazoProximo.filter(cliente => {
+      const chave = `homologacao-prazo-avisado:${cliente.id}:${dataDoAviso}`;
+      if (window.localStorage.getItem(chave)) return false;
+      window.localStorage.setItem(chave, "1");
+      return true;
+    });
+
+    if (avisosPendentes.length === 1) {
+      const aviso = avisosPendentes[0];
+      toast.warning(new Date(`${aviso.prazoEm}T00:00:00`) < hoje ? "Projeto com prazo atrasado" : "Prazo de projeto próximo", {
+        description: descricaoDoPrazo(aviso),
+      });
+    } else if (avisosPendentes.length > 1) {
+      toast.warning("Prazos de projetos próximos", {
+        description: `${avisosPendentes.length} projetos vencem em até três dias ou já estão atrasados.`,
+      });
+    }
+
+    // A sincronização não depende do aviso visual/localStorage. Assim, se o banco
+    // estivesse indisponível antes, o prazo é registrado no sino na próxima tentativa.
+    if (projetosComPrazoProximo.length > 0) {
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session?.user) return;
+
+        return supabase.from("homologacao_notificacoes").upsert(
+          projetosComPrazoProximo.map(cliente => ({
+            user_id: session.user.id,
+            projeto_id: cliente.id,
+            tipo: "prazo_proximo",
+            chave: `prazo-proximo:${cliente.id}:${cliente.prazoEm}`,
+            titulo: new Date(`${cliente.prazoEm}T00:00:00`) < hoje ? "Projeto com prazo atrasado" : "Prazo de projeto próximo",
+            descricao: descricaoDoPrazo(cliente),
+          })),
+          { onConflict: "user_id,chave", ignoreDuplicates: true }
+        );
+      });
+    }
+  }, [clientes]);
+
   async function handleColunaDrop(sourceIndex: number, targetIndex: number) {
     if (sourceIndex === targetIndex) return;
 
@@ -435,10 +536,17 @@ export function useHomologacaoKanban() {
       clientesAtuais.map(cliente => cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente)
     );
 
-    const { error } = await supabase
+    let { error } = await supabase
       .from("homologacao_projetos")
       .update(projetoParaBanco(clienteAtualizado))
       .eq("id", clienteAtualizado.id);
+
+    if (erroDeColunaPrazoAusente(error)) {
+      ({ error } = await supabase
+        .from("homologacao_projetos")
+        .update(projetoParaBancoSemPrazoEm(clienteAtualizado))
+        .eq("id", clienteAtualizado.id));
+    }
 
     if (error) {
       console.error("Erro ao atualizar projeto:", error);
@@ -516,6 +624,7 @@ export function useHomologacaoKanban() {
       tipoLigacao: "Bifasico",
       protocolo: null,
       prazo: "Novo projeto",
+      prazoEm: null,
       responsavel: "",
       procuracaoGerada: false,
       equipamentos: [],
@@ -531,11 +640,19 @@ export function useHomologacaoKanban() {
 
     void supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) return;
-      const { error } = await supabase.from("homologacao_projetos").insert({
+      let { error } = await supabase.from("homologacao_projetos").insert({
         id,
         user_id: session.user.id,
         ...projetoParaBanco(novoCliente),
       });
+
+      if (erroDeColunaPrazoAusente(error)) {
+        ({ error } = await supabase.from("homologacao_projetos").insert({
+          id,
+          user_id: session.user.id,
+          ...projetoParaBancoSemPrazoEm(novoCliente),
+        }));
+      }
       if (error) {
         console.error("Erro ao criar projeto:", error);
         void carregarHomologacao();
